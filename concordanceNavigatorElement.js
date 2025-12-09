@@ -122,6 +122,10 @@ class concordanceNavigatorElement extends HTMLElement {
             me.timelinePause();
             me.updateIndex(this.value);
         });
+        this.itemSlider.addEventListener("change", function () {
+            me.showConnection();
+        });
+
         this.itemSelector.addEventListener("keypress", function (e) {
             me.specialKeyOnInput(this, e);
         });
@@ -281,7 +285,10 @@ class concordanceNavigatorElement extends HTMLElement {
             this.itemSelector.value = this.getEnhancedValue();
         }
         else {
-            this.updateIndex(index);
+            let success = this.updateIndex(index);
+            if (success) {
+                this.showConnection();
+            }
         }
     }
 
@@ -298,7 +305,6 @@ class concordanceNavigatorElement extends HTMLElement {
         });
         this.dispatchEvent(updateLayoutEvent);
     }
-
 
     setTimelineBasis = async () => {
         this.timelineBasisData = [];
