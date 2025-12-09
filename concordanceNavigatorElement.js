@@ -15,10 +15,17 @@ template.innerHTML = `
         }
 
         #item-selector {
+        #input-wrapper {
+            position: relative;
             flex-grow: 1;
-            min-width: 0;
+            margin: 3px;
+        }
+
+        #item-selector {
+            width: 100%;
             height: 26px;
             box-sizing: border-box;
+            padding-right: 30px;
         }
 
         #buttons-container {
@@ -37,7 +44,16 @@ template.innerHTML = `
         }
 
         #show-connection-button {
-            flex-grow: 1;
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 30px;
+            border: none;
+            background: #00000021;
+            margin: 0;
+            cursor: pointer;
+            font-size: 0.8em;
         }
 
         #time-container {
@@ -70,11 +86,14 @@ template.innerHTML = `
         </div>
         <div id="item-selector-container">
             <label for="item-slider" id="item-selector-label"></label>
-            <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
+         <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
 
             <div id="buttons-container">
                 <button id="prev-connection-button">&lt;</button>
-                 <input type="text" id="item-selector" />
+                <div id="input-wrapper">
+                    <input type="text" id="item-selector" />
+                    <button id="show-connection-button"><span class="material-symbols-outlined">OK</span></button>
+                </div>
                 <button id="next-connection-button">&gt;</button>
             </div>
         </div>
@@ -148,10 +167,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.itemSelector.addEventListener("focus", () => {
             me.timelinePause();
         });
-        // this.showConnectionButton.addEventListener("click", function () {
-        //     me.timelinePause();
-        //     me.showConnection();
-        // });
+        this.showConnectionButton.addEventListener("click", function () {
+            me.timelinePause();
+            me.showConnection();
+        });
         this.prevConnectionButton.addEventListener("click", function () {
             me.timelinePause();
             me.showPrevConnection();
@@ -210,9 +229,9 @@ class concordanceNavigatorElement extends HTMLElement {
             this.concordances = JSON.parse(newValue);
             this.setConcordances();
         }
-        else if (name === "show-connection-button-label-data") {
-            this.showConnectionButton.innerHTML = newValue;
-        }
+        // else if (name === "show-connection-button-label-data") {
+        //     this.showConnectionButton.innerHTML = newValue;
+        // }
 
     }
 
