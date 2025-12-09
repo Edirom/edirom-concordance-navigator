@@ -14,10 +14,26 @@ template.innerHTML = `
             text-align: center;
         }
 
+        #item-selector {
+            flex-grow: 1;
+            min-width: 0;
+            height: 26px;
+            box-sizing: border-box;
+        }
+
         #buttons-container {
             display: flex;
             justify-content: space-between;
             flex-direction: row;
+            align-items: center;
+        }
+
+        #prev-connection-button, #next-connection-button {
+            height: 26px;
+            width: 26px;
+            padding: 0;
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         #show-connection-button {
@@ -55,10 +71,10 @@ template.innerHTML = `
         <div id="item-selector-container">
             <label for="item-slider" id="item-selector-label"></label>
             <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
-            <input type="text" id="item-selector" />
+
             <div id="buttons-container">
                 <button id="prev-connection-button">&lt;</button>
-                <button id="show-connection-button"></button>
+                 <input type="text" id="item-selector" />
                 <button id="next-connection-button">&gt;</button>
             </div>
         </div>
@@ -132,10 +148,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.itemSelector.addEventListener("focus", () => {
             me.timelinePause();
         });
-        this.showConnectionButton.addEventListener("click", function () {
-            me.timelinePause();
-            me.showConnection();
-        });
+        // this.showConnectionButton.addEventListener("click", function () {
+        //     me.timelinePause();
+        //     me.showConnection();
+        // });
         this.prevConnectionButton.addEventListener("click", function () {
             me.timelinePause();
             me.showPrevConnection();
