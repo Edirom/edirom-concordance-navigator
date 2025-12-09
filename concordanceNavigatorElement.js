@@ -153,6 +153,7 @@ class concordanceNavigatorElement extends HTMLElement {
         });
         this.currentTimeElem.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
+                console.log("Time changed with key press.");
                 var newTime = this.hhmmssToSeconds(this.currentTimeElem.value);
                 if (newTime === false) {
                     newTime = this.currentTime;
@@ -266,7 +267,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.updateIndex(0);
         this.maxIndex = this.data.length - 1;
         this.itemSlider.max = this.maxIndex;
-        this.setTimelineBasis();
+        // this.setTimelineBasis(); // Set this to active time based media features (work in progress).
     }
 
     getEnhancedValue = () => {
@@ -369,7 +370,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     startStopwatch = () => {
-        console.log("!!!!");
         this.stopwatch.startTime = Date.now();
         this.stopwatch.frozenCurrentTime = this.currentTime;
         this.stopwatch.intervalId = setInterval(() => {
