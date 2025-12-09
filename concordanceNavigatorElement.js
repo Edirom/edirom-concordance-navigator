@@ -4,8 +4,8 @@ import '../edirom-core-web-components/src/edirom-icon.js';
 console.log("ConcordanceNavigator Webcomponent loaded");
 
 
-const template = document.createElement("template");
-template.innerHTML = `
+const templates = {
+    desktop: `
 <div>
     <style>
         #concordance-navigator-container, #item-selector-container, #group-selector-container, #concordance-selector-container {
@@ -118,13 +118,131 @@ template.innerHTML = `
         </div>
     </div>
 </div>
-`;
+`,
+
+    mobile: `<div>
+    <style>
+        #concordance-navigator-container, #item-selector-container, #group-selector-container, #concordance-selector-container {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: column;
+        }
+
+        #concordance-selector, #group-selector, #item-selector {
+            text-align: center;
+        }
+
+        #input-wrapper {
+            position: relative;
+            flex-grow: 1;
+            margin: 3px;
+        }
+
+        #item-selector {
+            width: 100%;
+            height: 26px;
+            box-sizing: border-box;
+            padding-right: 30px;
+        }
+
+        #buttons-container {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        #prev-connection-button, #next-connection-button {
+            height: 26px;
+            width: 26px;
+            padding: 0;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        #show-connection-button {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 30px;
+            border: none;
+            background: #69696921;
+            margin: 0;
+            font-size: 0.8em;
+        }
+
+        #show-connection-button:hover {
+            background: #08080826;
+        }
+
+        #time-container {
+            display: none;
+        }
+
+        .duration-container {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        button {
+            margin: 3px;
+        }
+        input[type="range"], button, select {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+    <div id="concordance-navigator-container">
+        <div id="concordance-selector-container">
+            <select name="concordance-selector" id="concordance-selector">
+            </select>
+        </div>
+        <div id="group-selector-container">
+            <label for="group-selector" id="group-selector-label"></label>
+            <select name="group-selector" id="group-selector">
+            </select>
+        </div>
+        <div id="item-selector-container">
+            <label for="item-slider" id="item-selector-label"></label>
+         <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
+
+            <div id="buttons-container">
+                <button id="prev-connection-button"><edirom-icon name="eo_previous"></edirom-icon></button>
+                <div id="input-wrapper">
+                    <input type="text" id="item-selector" />
+                    <button id="show-connection-button"><edirom-icon name="keyboard_return"></edirom-icon></button>
+                </div>
+                <button id="next-connection-button"><edirom-icon name="eo_next"></edirom-icon></button>
+            </div>
+        </div>
+        <div id="time-container">
+            <hr />
+            <select name="timeline-basis-selector" id="timeline-basis-selector"></select>
+            <div class="duration-container">
+                <input type="text" id="current-time" value="0:00" size="5"></input>
+                /
+                <div id="total-time"></div>
+            </div>
+            <button id="play-button">Play</button>
+        </div>
+    </div>
+</div>
+`
+};
 
 
 class concordanceNavigatorElement extends HTMLElement {
     constructor() {
         super();
         let me = this;
+        const mode = this.getAttribute('layout-mode') === 'mobile' ? 'mobile' : 'desktop';
+        const template = document.createElement("template");
+        template.innerHTML = templates[mode];
         this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
         this.shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
         this.shadow.append(template.content.cloneNode(true))
