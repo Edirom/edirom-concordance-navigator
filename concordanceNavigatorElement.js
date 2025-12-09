@@ -275,6 +275,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this.itemSelectorLabel.innerHTML = concordance.connections.label;
             this.setData(concordance.connections.connections, "name");
             this.itemSelector.value = this.getEnhancedValue();
+            this.fireLayoutChangeEvent();
         }
     }
 
@@ -300,11 +301,10 @@ class concordanceNavigatorElement extends HTMLElement {
     switchGroup = (groupName) => {
         console.log("Group switched!");
         var group = this.groups.find(group => group.name === groupName);
-
         this.setData(group.connections.connections, "name");
-
         this.itemSelectorLabel.innerHTML = group.connections.label;
         this.itemSelector.value = this.getEnhancedValue();
+        this.fireLayoutChangeEvent();
     }
 
     setData = (data, labelField) => {
@@ -342,6 +342,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     fireLayoutChangeEvent = () => {
+        console.log("Firing layout change event!");
         const updateLayoutEvent = new CustomEvent('layout-change', {
             bubbles: true
         });
@@ -515,7 +516,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     updateIndex = (newIndex, updateTime = true) => {
-        this.fireLayoutChangeEvent();
         var newIndex = parseInt(newIndex);
         if (newIndex < 0 || newIndex > this.maxIndex) return false; // Prevent out of bounds
         this.index = newIndex;
