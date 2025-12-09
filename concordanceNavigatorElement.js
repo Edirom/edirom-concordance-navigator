@@ -53,9 +53,13 @@ template.innerHTML = `
             height: 100%;
             width: 30px;
             border: none;
-            background: #00000021;
+            background: #69696921;
             margin: 0;
             font-size: 0.8em;
+        }
+
+        #show-connection-button:hover {
+            background: #08080826;
         }
 
         #time-container {
@@ -234,9 +238,6 @@ class concordanceNavigatorElement extends HTMLElement {
             this.concordances = JSON.parse(newValue);
             this.setConcordances();
         }
-        // else if (name === "show-connection-button-label-data") {
-        //     this.showConnectionButton.innerHTML = newValue;
-        // }
 
     }
 
