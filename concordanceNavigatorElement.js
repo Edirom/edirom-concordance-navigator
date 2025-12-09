@@ -125,7 +125,8 @@ class concordanceNavigatorElement extends HTMLElement {
     constructor() {
         super();
         let me = this;
-        this.shadow = this.attachShadow({ mode: "open" });
+        this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
+        this.shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
         this.shadow.append(template.content.cloneNode(true))
         this.concordances = [];
         this.groups = [];
