@@ -292,6 +292,13 @@ class concordanceNavigatorElement extends HTMLElement {
 
     }
 
+    fireLayoutChangeEvent = () => {
+        const updateLayoutEvent = new CustomEvent('layout-change', {
+            bubbles: true
+        });
+        this.dispatchEvent(updateLayoutEvent);
+    }
+
 
     setTimelineBasis = async () => {
         this.timelineBasisData = [];
@@ -460,7 +467,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     updateIndex = (newIndex, updateTime = true) => {
-        console.log(updateTime);
+        this.fireLayoutChangeEvent();
         var newIndex = parseInt(newIndex);
         if (newIndex < 0 || newIndex > this.maxIndex) return false; // Prevent out of bounds
         this.index = newIndex;
