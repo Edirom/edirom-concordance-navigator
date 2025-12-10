@@ -122,7 +122,33 @@ const templates = {
 
     mobile: `<div>
     <style>
-        #concordance-navigator-container, #slider-container, #group-selector-container, #concordance-selector-container, #buttons-container {
+        #concordance-navigator-container {
+            display: grid;
+            grid-template-columns: 10% 1fr 10%;
+            align-items: center;
+            width: 100%;
+            column-gap: 20px;
+            box-sizing: border-box;
+        }
+
+        #main-controls-container {
+            display: flex;
+            flex-direction: column;
+            justify-self: center;
+            width: min(100%, 500px);
+            max-width: 500px;
+            min-width: 0;
+        }
+
+        #collapse-expand-container, #scan-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            flex-shrink: 0;
+        }
+
+        #slider-container, #group-selector-container, #concordance-selector-container {
             display: flex;
             justify-content: space-between;
             flex-direction: column;
@@ -199,7 +225,7 @@ const templates = {
     </style>
     <div id="concordance-navigator-container">
         <div id="collapse-expand-container">
-            <edirom-icon name="expand_all"></edirom-icon></button>
+            <edirom-icon name="expand_all" size="3rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
             <div id="collapsed-container">
@@ -227,7 +253,7 @@ const templates = {
             </div>
         </div>
         <div id="scan-container">
-            <edirom-icon name="qr_code_scanner"></edirom-icon></button>
+            <edirom-icon name="qr_code_scanner" size="3rem"></edirom-icon>
         </div>
     </div>
 </div>
