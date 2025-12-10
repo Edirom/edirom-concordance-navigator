@@ -610,6 +610,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     timelinePause = () => {
+        if (this.mode === "desktop") {
         this.timelineState = "pause";
         this.playButton.innerHTML = "Play";
         clearInterval(this.stopwatch.intervalId);
@@ -618,6 +619,7 @@ class concordanceNavigatorElement extends HTMLElement {
             bubbles: true
         });
         this.dispatchEvent(changedPlayPauseStatus);
+        }
     }
 
     getMeasureFromSeconds = (seconds) => {
