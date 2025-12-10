@@ -122,6 +122,15 @@ const templates = {
 
     mobile: `<div>
     <style>
+        :host {
+            overscroll-behavior: contain; /* Prevent pull-to-refresh on supported browsers */
+            touch-action: pan-x pan-y; /* Allow native gestures; vertical is handled via JS for collapse */
+        }
+
+        input[type="range"] {
+            touch-action: pan-x; /* Keep sliders draggable while blocking vertical pull-to-refresh */
+        }
+
         #concordance-navigator-container {
             display: grid;
             grid-template-columns: 10% 1fr 10%;
@@ -267,9 +276,9 @@ class concordanceNavigatorElement extends HTMLElement {
     constructor() {
         super();
         let me = this;
-        const mode = this.getAttribute('layout-mode') === 'mobile' ? 'mobile' : 'desktop';
+        this.mode = this.getAttribute('layout-mode') === 'mobile' ? 'mobile' : 'desktop';
         const template = document.createElement("template");
-        template.innerHTML = templates[mode];
+        template.innerHTML = templates[this.mode];
         this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
         this.shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
         this.shadow.append(template.content.cloneNode(true))
@@ -286,6 +295,8 @@ class concordanceNavigatorElement extends HTMLElement {
         this.interval = null;
         this.currentTime = 0;
         this.stopwatch = { elapsedTime: 0 }
+        this.swipeStartY = null;
+        this.swipeThreshold = 30; // Minimum vertical distance (px) to treat as swipe
 
         // Elements
         this.concordanceSelector = this.shadow.querySelector("#concordance-selector");
@@ -305,6 +316,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.playButton = this.shadow.querySelector("#play-button");
         this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
         this.collapsedContainer = this.shadow.querySelector("#collapsed-container");
+        this.collapseExpandIcon = this.collapseExpandContainer ? this.collapseExpandContainer.querySelector("edirom-icon") : null;
 
         // Event listeners
         this.concordanceSelector.addEventListener("change", function () { me.switchConcordance(this.value) });
@@ -335,7 +347,7 @@ class concordanceNavigatorElement extends HTMLElement {
             me.timelinePause();
             me.showNextConnection();
         });
-        if (mode === "desktop") {
+        if (this.mode === "desktop") {
             this.timelineBasisSelector.addEventListener("change", function () { me.switchTimelineBasis(this.value) });
             this.playButton.addEventListener("click", function () {
                 if (me.timelineState === "pause") {
@@ -360,16 +372,40 @@ class concordanceNavigatorElement extends HTMLElement {
                 }
             });
         }
-        if (mode === "mobile") {
+        if (this.mode === "mobile") {
             this.collapseExpandContainer.addEventListener("click", () => {
-                this.collapsedContainer.classList.toggle("hidden");
-                const icon = this.collapseExpandContainer.querySelector("edirom-icon");
-                if (this.collapsedContainer.classList.contains("hidden")) {
-                    icon.setAttribute("name", "expand_all");
-                } else {
-                    icon.setAttribute("name", "collapse_all");
-                }
+                this.toggleCollapseState();
             });
+
+            // Simple vertical swipe detection to expand/collapse on touch devices.
+            this.addEventListener("touchstart", (e) => {
+                if (e.touches.length !== 1) return;
+                const inRangeInput = e.composedPath().some(el => el instanceof HTMLInputElement && el.type === "range");
+                if (inRangeInput) {
+                    this.swipeStartY = null; // Let native slider handle the gesture.
+                    return;
+                }
+                this.swipeStartY = e.touches[0].clientY;
+            }, { passive: false });
+
+            this.addEventListener("touchmove", (e) => {
+                if (this.swipeStartY === null || e.touches.length !== 1) return;
+                e.preventDefault(); // Block default scroll/pull-to-refresh while gesture is active.
+            }, { passive: false });
+
+            this.addEventListener("touchend", (e) => {
+                if (this.swipeStartY === null || e.changedTouches.length === 0) return;
+                const deltaY = e.changedTouches[0].clientY - this.swipeStartY;
+                if (Math.abs(deltaY) >= this.swipeThreshold) {
+                    if (deltaY < 0) {
+                        this.expandNavigator();
+                    } else {
+                        e.preventDefault();
+                        this.collapseNavigator();
+                    }
+                }
+                this.swipeStartY = null;
+            }, { passive: false });
         }
 
     }
@@ -386,6 +422,33 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     connectedCallback() {
+    }
+
+    setCollapseState = (shouldCollapse) => {
+        if (!this.collapsedContainer || !this.collapseExpandIcon) return;
+        const isCurrentlyCollapsed = this.collapsedContainer.classList.contains("hidden");
+        if (shouldCollapse === isCurrentlyCollapsed) return;
+
+        if (shouldCollapse) {
+            this.collapsedContainer.classList.add("hidden");
+            this.collapseExpandIcon.setAttribute("name", "expand_all");
+        } else {
+            this.collapsedContainer.classList.remove("hidden");
+            this.collapseExpandIcon.setAttribute("name", "collapse_all");
+        }
+    }
+
+    toggleCollapseState = () => {
+        const isCollapsed = this.collapsedContainer.classList.contains("hidden");
+        this.setCollapseState(!isCollapsed);
+    }
+
+    collapseNavigator = () => {
+        this.setCollapseState(true);
+    }
+
+    expandNavigator = () => {
+        this.setCollapseState(false);
     }
 
     disconnectedCallback() {
