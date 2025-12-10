@@ -190,8 +190,8 @@ const templates = {
         }
 
         #prev-connection-button, #next-connection-button {
-            height: 26px;
-            width: 26px;
+            height: 35px;
+            width: 35px;
             padding: 0;
             flex-shrink: 0;
             box-sizing: border-box;
@@ -235,35 +235,33 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="collapse-expand-container">
+        <div id="collapse-expand-container" class="visible-when-collapsed">
             <edirom-icon name="expand_all" size="2rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
-            <div id="collapsed-container" class="hidden">
-                <div id="concordance-selector-container">
-                    <select name="concordance-selector" id="concordance-selector">
-                    </select>
-                </div>
-                <div id="group-selector-container">
-                    <label for="group-selector" id="group-selector-label"></label>
-                    <select name="group-selector" id="group-selector">
-                    </select>
-                </div>
-                <div id="slider-container">
-                    <label for="item-slider" id="item-selector-label"></label>
-                <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
-                </div>
+            <div id="concordance-selector-container">
+                <select name="concordance-selector" id="concordance-selector">
+                </select>
             </div>
-            <div id="buttons-container">
-                <button id="prev-connection-button"><edirom-icon name="eo_previous"></edirom-icon></button>
+            <div id="group-selector-container">
+                <label for="group-selector" id="group-selector-label"></label>
+                <select name="group-selector" id="group-selector">
+                </select>
+            </div>
+            <div id="slider-container">
+                <label for="item-slider" id="item-selector-label" class="visible-when-collapsed"></label>
+            <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
+            </div>
+            <div id="buttons-container" class="visible-when-collapsed">
+                <button id="prev-connection-button"><edirom-icon name="eo_previous" size="2rem"></edirom-icon></button>
                 <div id="input-wrapper">
                     <input type="text" id="item-selector" />
                     <button id="show-connection-button"><edirom-icon name="keyboard_return"></edirom-icon></button>
                 </div>
-                <button id="next-connection-button"><edirom-icon name="eo_next"></edirom-icon></button>
+                <button id="next-connection-button"><edirom-icon name="eo_next" size="2rem"></edirom-icon></button>
             </div>
         </div>
-        <div id="scan-container">
+        <div id="scan-container" class="visible-when-collapsed">
             <edirom-icon name="qr_code_scanner" size="3rem"></edirom-icon>
         </div>
     </div>
@@ -298,6 +296,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.swipeStartY = null;
         this.swipeThreshold = 30; // Minimum vertical distance (px) to treat as swipe
         this.itemSelectorWasFocusedOnShowClick = false;
+        this.isCollapsed = false;
 
         // Elements
         this.concordanceSelector = this.shadow.querySelector("#concordance-selector");
@@ -316,7 +315,6 @@ class concordanceNavigatorElement extends HTMLElement {
         this.totalTimeElem = this.shadow.querySelector("#total-time");
         this.playButton = this.shadow.querySelector("#play-button");
         this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
-        this.collapsedContainer = this.shadow.querySelector("#collapsed-container");
         this.collapseExpandIcon = this.collapseExpandContainer ? this.collapseExpandContainer.querySelector("edirom-icon") : null;
 
         // Event listeners
@@ -416,6 +414,9 @@ class concordanceNavigatorElement extends HTMLElement {
                 }
                 this.swipeStartY = null;
             }, { passive: false });
+
+            // Default to collapsed on mobile so only marked elements remain visible.
+            this.setCollapseState(true);
         }
 
     }
@@ -434,23 +435,41 @@ class concordanceNavigatorElement extends HTMLElement {
     connectedCallback() {
     }
 
-    setCollapseState = (shouldCollapse) => {
-        if (!this.collapsedContainer || !this.collapseExpandIcon) return;
-        const isCurrentlyCollapsed = this.collapsedContainer.classList.contains("hidden");
-        if (shouldCollapse === isCurrentlyCollapsed) return;
+    getElementsHiddenWhenCollapsed = () => {
+        const container = this.shadow.querySelector("#concordance-navigator-container");
+        if (!container) return [];
 
-        if (shouldCollapse) {
-            this.collapsedContainer.classList.add("hidden");
-            this.collapseExpandIcon.setAttribute("name", "expand_all");
-        } else {
-            this.collapsedContainer.classList.remove("hidden");
-            this.collapseExpandIcon.setAttribute("name", "collapse_all");
+        const allElements = Array.from(container.querySelectorAll("*"));
+        return allElements.filter(el => {
+            // Keep the root container visible so its visible children can still render.
+            if (el === container) return false;
+            // If this element is marked visible, keep it visible.
+            if (el.classList.contains('visible-when-collapsed')) return false;
+            // If this element contains any visible-when-collapsed descendant, keep it visible to avoid hiding ancestors.
+            if (el.querySelector('.visible-when-collapsed')) return false;
+            // If any ancestor is marked visible, keep visible (redundant with descendant check but explicit).
+            if (el.closest('.visible-when-collapsed')) return false;
+            // Otherwise it should be hidden.
+            return true;
+        });
+    }
+
+    setCollapseState = (shouldCollapse) => {
+        if (shouldCollapse === this.isCollapsed) return;
+        this.isCollapsed = shouldCollapse;
+
+        const elementsToToggle = this.getElementsHiddenWhenCollapsed();
+        for (const el of elementsToToggle) {
+            el.classList.toggle("hidden", shouldCollapse);
+        }
+
+        if (this.collapseExpandIcon) {
+            this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "expand_all" : "collapse_all");
         }
     }
 
     toggleCollapseState = () => {
-        const isCollapsed = this.collapsedContainer.classList.contains("hidden");
-        this.setCollapseState(!isCollapsed);
+        this.setCollapseState(!this.isCollapsed);
     }
 
     collapseNavigator = () => {
@@ -536,6 +555,7 @@ class concordanceNavigatorElement extends HTMLElement {
         var group = this.groups.find(group => group.name === groupName);
         this.setData(group.connections.connections, "name");
         this.itemSelectorLabel.innerHTML = group.connections.label;
+        this.itemSelectorLabel.innerHTML = "Test";
         this.itemSelector.value = this.getEnhancedValue();
         this.fireLayoutChangeEvent();
     }
