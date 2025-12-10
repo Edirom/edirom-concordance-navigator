@@ -236,7 +236,7 @@ const templates = {
     </style>
     <div id="concordance-navigator-container">
         <div id="collapse-expand-container">
-            <edirom-icon name="expand_all" size="3rem"></edirom-icon>
+            <edirom-icon name="expand_all" size="2rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
             <div id="collapsed-container" class="hidden">
@@ -297,6 +297,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.stopwatch = { elapsedTime: 0 }
         this.swipeStartY = null;
         this.swipeThreshold = 30; // Minimum vertical distance (px) to treat as swipe
+        this.itemSelectorWasFocusedOnShowClick = false;
 
         // Elements
         this.concordanceSelector = this.shadow.querySelector("#concordance-selector");
@@ -335,9 +336,18 @@ class concordanceNavigatorElement extends HTMLElement {
         this.itemSelector.addEventListener("focus", () => {
             me.timelinePause();
         });
+        this.showConnectionButton.addEventListener("mousedown", () => {
+            // Capture focus state before the click moves focus away from the input.
+            me.itemSelectorWasFocusedOnShowClick = me.shadow.activeElement === me.itemSelector;
+        });
         this.showConnectionButton.addEventListener("click", function () {
             me.timelinePause();
-            me.showConnection();
+            if (me.itemSelectorWasFocusedOnShowClick) {
+                me.setEnhancedValue(me.itemSelector.value);
+            } else {
+                me.showConnection();
+            }
+            me.itemSelectorWasFocusedOnShowClick = false;
         });
         this.prevConnectionButton.addEventListener("click", function () {
             me.timelinePause();
@@ -717,7 +727,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     showConnection = () => {
-        console.log("showing!");
+        console.log("showing", this.index);
         // Send showConnection event to host
         const showConnectionRequest = new CustomEvent('show-connection-request', {
             detail: { plist: this.data[this.index]["plist"] },
