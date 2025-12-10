@@ -122,7 +122,7 @@ const templates = {
 
     mobile: `<div>
     <style>
-        #concordance-navigator-container, #item-selector-container, #group-selector-container, #concordance-selector-container {
+        #concordance-navigator-container, #slider-container, #group-selector-container, #concordance-selector-container, #buttons-container {
             display: flex;
             justify-content: space-between;
             flex-direction: column;
@@ -198,19 +198,25 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="concordance-selector-container">
-            <select name="concordance-selector" id="concordance-selector">
-            </select>
+        <div id="collapse-expand-container">
+            <edirom-icon name="expand_all"></edirom-icon></button>
         </div>
-        <div id="group-selector-container">
-            <label for="group-selector" id="group-selector-label"></label>
-            <select name="group-selector" id="group-selector">
-            </select>
-        </div>
-        <div id="item-selector-container">
-            <label for="item-slider" id="item-selector-label"></label>
-         <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
-
+        <div id="main-controls-container">
+            <div id="collapsed-container">
+                <div id="concordance-selector-container">
+                    <select name="concordance-selector" id="concordance-selector">
+                    </select>
+                </div>
+                <div id="group-selector-container">
+                    <label for="group-selector" id="group-selector-label"></label>
+                    <select name="group-selector" id="group-selector">
+                    </select>
+                </div>
+                <div id="slider-container">
+                    <label for="item-slider" id="item-selector-label"></label>
+                <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
+                </div>
+            </div>
             <div id="buttons-container">
                 <button id="prev-connection-button"><edirom-icon name="eo_previous"></edirom-icon></button>
                 <div id="input-wrapper">
@@ -220,15 +226,8 @@ const templates = {
                 <button id="next-connection-button"><edirom-icon name="eo_next"></edirom-icon></button>
             </div>
         </div>
-        <div id="time-container">
-            <hr />
-            <select name="timeline-basis-selector" id="timeline-basis-selector"></select>
-            <div class="duration-container">
-                <input type="text" id="current-time" value="0:00" size="5"></input>
-                /
-                <div id="total-time"></div>
-            </div>
-            <button id="play-button">Play</button>
+        <div id="scan-container">
+            <edirom-icon name="qr_code_scanner"></edirom-icon></button>
         </div>
     </div>
 </div>
