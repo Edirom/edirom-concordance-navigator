@@ -141,6 +141,8 @@ const templates = {
         }
 
         #collapse-expand-container, #scan-container {
+            height: 100%;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -228,7 +230,7 @@ const templates = {
             <edirom-icon name="expand_all" size="3rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
-            <div id="collapsed-container">
+            <div id="collapsed-container" class="hidden">
                 <div id="concordance-selector-container">
                     <select name="concordance-selector" id="concordance-selector">
                     </select>
@@ -301,11 +303,12 @@ class concordanceNavigatorElement extends HTMLElement {
         this.currentTimeElem = this.shadow.querySelector("#current-time");
         this.totalTimeElem = this.shadow.querySelector("#total-time");
         this.playButton = this.shadow.querySelector("#play-button");
+        this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
+        this.collapsedContainer = this.shadow.querySelector("#collapsed-container");
 
         // Event listeners
         this.concordanceSelector.addEventListener("change", function () { me.switchConcordance(this.value) });
         this.groupSelector.addEventListener("change", function () { me.switchGroup(this.value) });
-        this.timelineBasisSelector.addEventListener("change", function () { me.switchTimelineBasis(this.value) });
         this.itemSlider.addEventListener("input", function () {
             me.timelinePause();
             me.updateIndex(this.value);
@@ -332,28 +335,42 @@ class concordanceNavigatorElement extends HTMLElement {
             me.timelinePause();
             me.showNextConnection();
         });
-        this.playButton.addEventListener("click", function () {
-            if (me.timelineState === "pause") {
-                me.timelinePlay();
-            }
-            else if (me.timelineState === "play") {
-                me.timelinePause();
-            }
-        });
-        this.currentTimeElem.addEventListener("focus", () => {
-            me.timelinePause();
-        });
-        this.currentTimeElem.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                console.log("Time changed with key press.");
-                var newTime = this.hhmmssToSeconds(this.currentTimeElem.value);
-                if (newTime === false) {
-                    newTime = this.currentTime;
+        if (mode === "desktop") {
+            this.timelineBasisSelector.addEventListener("change", function () { me.switchTimelineBasis(this.value) });
+            this.playButton.addEventListener("click", function () {
+                if (me.timelineState === "pause") {
+                    me.timelinePlay();
                 }
-                this.currentTime = newTime;
-                this.timeChanged();
-            }
-        });
+                else if (me.timelineState === "play") {
+                    me.timelinePause();
+                }
+            });
+            this.currentTimeElem.addEventListener("focus", () => {
+                me.timelinePause();
+            });
+            this.currentTimeElem.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    console.log("Time changed with key press.");
+                    var newTime = this.hhmmssToSeconds(this.currentTimeElem.value);
+                    if (newTime === false) {
+                        newTime = this.currentTime;
+                    }
+                    this.currentTime = newTime;
+                    this.timeChanged();
+                }
+            });
+        }
+        if (mode === "mobile") {
+            this.collapseExpandContainer.addEventListener("click", () => {
+                this.collapsedContainer.classList.toggle("hidden");
+                const icon = this.collapseExpandContainer.querySelector("edirom-icon");
+                if (this.collapsedContainer.classList.contains("hidden")) {
+                    icon.setAttribute("name", "expand_all");
+                } else {
+                    icon.setAttribute("name", "collapse_all");
+                }
+            });
+        }
 
     }
 
