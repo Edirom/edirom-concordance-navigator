@@ -555,7 +555,6 @@ class concordanceNavigatorElement extends HTMLElement {
         var group = this.groups.find(group => group.name === groupName);
         this.setData(group.connections.connections, "name");
         this.itemSelectorLabel.innerHTML = group.connections.label;
-        this.itemSelectorLabel.innerHTML = "Test";
         this.itemSelector.value = this.getEnhancedValue();
         this.fireLayoutChangeEvent();
     }
