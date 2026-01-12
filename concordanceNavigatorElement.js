@@ -125,6 +125,11 @@ const templates = {
         :host {
             overscroll-behavior: contain; /* Prevent pull-to-refresh on supported browsers */
             touch-action: pan-x pan-y; /* Allow native gestures; vertical is handled via JS for collapse */
+            --nav-bg: #1f2333;
+            --nav-contrast: #e4d9a5;
+            --nav-contrast-strong: #cdbf86;
+            --nav-surface: #f6f6f3;
+            --nav-surface-border: #d8d0a4;
         }
 
         input[type="range"] {
@@ -147,6 +152,10 @@ const templates = {
             width: min(100%, 500px);
             max-width: 500px;
             min-width: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+            border-radius: 10px;
+            padding: 6px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         #collapse-expand-container, #scan-container {
@@ -177,9 +186,20 @@ const templates = {
 
         #item-selector {
             width: 100%;
-            height: 26px;
+            height: 35px;
             box-sizing: border-box;
-            padding-right: 30px;
+            padding-right: 40px;
+            background: var(--ewk-tertiary-color);
+            border: 1px solid var(--nav-surface-border);
+            border-radius: 8px;
+            color: #1a1a1a;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        #item-selector:focus {
+            outline: 2px solid var(--nav-contrast);
+            outline-offset: 2px;
         }
 
         #buttons-container {
@@ -195,6 +215,23 @@ const templates = {
             padding: 0;
             flex-shrink: 0;
             box-sizing: border-box;
+            background: var(--nav-bg);
+            border: 1px solid var(--nav-contrast-strong);
+            border-radius: 10px;
+            color: var(--nav-contrast);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        #prev-connection-button:hover, #next-connection-button:hover {
+            background: #262b3f;
+        }
+
+        #prev-connection-button:active, #next-connection-button:active {
+            transform: translateY(1px);
         }
 
         #show-connection-button {
@@ -202,11 +239,13 @@ const templates = {
             right: 0;
             top: 0;
             height: 100%;
-            width: 30px;
-            border: none;
-            background: #69696921;
+            width: 36px;
+            border: 1px solid var(--nav-surface-border);
+            background: var(--ewk-secondary-color);
             margin: 0;
             font-size: 0.8em;
+            border-radius: 0 8px 8px 0;
+            color: #2d2d2d;
         }
 
         #show-connection-button:hover {
@@ -225,6 +264,7 @@ const templates = {
 
         button {
             margin: 3px;
+            color: var(--nav-contrast);
         }
         input[type="range"], button, select {
             cursor: pointer;
