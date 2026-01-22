@@ -106,6 +106,9 @@ const templates = {
 
         input[type="range"] {
             touch-action: pan-x; /* Keep sliders draggable while blocking vertical pull-to-refresh */
+            height: 2px;
+            margin-bottom: 10px;
+            margin-top: 10px;
         }
 
         #concordance-navigator-container {
@@ -126,7 +129,7 @@ const templates = {
             min-width: 0;
             background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
             border-radius: 10px;
-            padding: 6px 8px;
+            padding: 3px 8px;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -272,7 +275,7 @@ const templates = {
     </style>
     <div id="concordance-navigator-container">
         <div id="collapse-expand-container">
-            <edirom-icon name="expand_all" size="2rem"></edirom-icon>
+            <edirom-icon name="swipe_up" size="2rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
             <div id="concordance-selector-container"></div>
@@ -686,7 +689,7 @@ class concordanceNavigatorElement extends HTMLElement {
         }
 
         if (this.collapseExpandIcon) {
-            this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "expand_all" : "collapse_all");
+            this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "swipe_up" : "swipe_down");
         }
     }
 
@@ -710,6 +713,11 @@ class concordanceNavigatorElement extends HTMLElement {
             this.groupSelectorContainer,
             this.connectionsContainer
         ].filter(c => c != null);
+
+        if (this.collapseExpandContainer) {
+            const visibleContainersCount = mainContainers.filter(c => c.children.length > 0).length;
+            this.collapseExpandContainer.style.visibility = visibleContainersCount <= 1 ? "hidden" : "visible";
+        }
 
         if (this.isCollapsed) {
             // When collapsed, only show the lowest level container with content
