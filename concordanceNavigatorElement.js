@@ -815,7 +815,8 @@ class concordanceNavigatorElement extends HTMLElement {
             }
         }
 
-        // Re-apply collapsed state after UI rebuild
+        // Always expand when concordance changes, then re-apply mobile state
+        this.setCollapseState(false);
         if (this.mode === "mobile") {
             this.applyCollapsedState();
         }
@@ -843,7 +844,8 @@ class concordanceNavigatorElement extends HTMLElement {
             this.clearData();
         }
 
-        // Re-apply collapsed state after UI rebuild
+        // Always expand when group changes, then re-apply mobile state
+        this.setCollapseState(false);
         if (this.mode === "mobile") {
             this.applyCollapsedState();
         }
