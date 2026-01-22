@@ -84,38 +84,10 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="concordance-selector-container">
-            <select name="concordance-selector" id="concordance-selector">
-            </select>
-        </div>
-        <div id="group-selector-container">
-            <label for="group-selector" id="group-selector-label"></label>
-            <select name="group-selector" id="group-selector">
-            </select>
-        </div>
-        <div id="item-selector-container">
-            <label for="item-slider" id="item-selector-label"></label>
-         <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
-
-            <div id="buttons-container">
-                <button id="prev-connection-button"><edirom-icon name="eo_previous"></edirom-icon></button>
-                <div id="input-wrapper">
-                    <input type="text" id="item-selector" />
-                    <button id="show-connection-button"><edirom-icon name="keyboard_return"></edirom-icon></button>
-                </div>
-                <button id="next-connection-button"><edirom-icon name="eo_next"></edirom-icon></button>
-            </div>
-        </div>
-        <div id="time-container">
-            <hr />
-            <select name="timeline-basis-selector" id="timeline-basis-selector"></select>
-            <div class="duration-container">
-                <input type="text" id="current-time" value="0:00" size="5"></input>
-                /
-                <div id="total-time"></div>
-            </div>
-            <button id="play-button">Play</button>
-        </div>
+        <div id="concordance-selector-container"></div>
+        <div id="group-selector-container"></div>
+        <div id="connections-container"></div>
+        <div id="time-container"></div>
     </div>
 </div>
 `,
@@ -168,14 +140,38 @@ const templates = {
             flex-shrink: 0;
         }
 
-        #slider-container, #group-selector-container, #concordance-selector-container {
+        #connections-container, #group-selector-container, #concordance-selector-container {
             display: flex;
             justify-content: space-between;
             flex-direction: column;
         }
 
-        #concordance-selector, #group-selector, #item-selector {
+        #item-selector {
             text-align: center;
+        }
+
+        #concordance-selector, #group-selector {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-align: center;
+            text-align-last: center;
+            width: 100%;
+            height: 35px;
+            box-sizing: border-box;
+            padding: 0;
+            background: var(--nav-bg);
+            border: 1px solid var(--nav-contrast-strong);
+            border-radius: 10px;
+            color: var(--nav-contrast);
+            font-size: 1rem;
+            margin-bottom: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        #concordance-selector:hover, #group-selector:hover {
+            background: #262b3f;
         }
 
         #input-wrapper {
@@ -275,33 +271,15 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="collapse-expand-container" class="visible-when-collapsed">
+        <div id="collapse-expand-container">
             <edirom-icon name="expand_all" size="2rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
-            <div id="concordance-selector-container">
-                <select name="concordance-selector" id="concordance-selector">
-                </select>
-            </div>
-            <div id="group-selector-container">
-                <label for="group-selector" id="group-selector-label"></label>
-                <select name="group-selector" id="group-selector">
-                </select>
-            </div>
-            <div id="slider-container">
-                <label for="item-slider" id="item-selector-label" class="visible-when-collapsed"></label>
-            <input type="range" min="0" max="100" value="50" class="slider" id="item-slider" />
-            </div>
-            <div id="buttons-container" class="visible-when-collapsed">
-                <button id="prev-connection-button"><edirom-icon name="eo_previous" size="2rem"></edirom-icon></button>
-                <div id="input-wrapper">
-                    <input type="text" id="item-selector" />
-                    <button id="show-connection-button"><edirom-icon name="keyboard_return"></edirom-icon></button>
-                </div>
-                <button id="next-connection-button"><edirom-icon name="eo_next" size="2rem"></edirom-icon></button>
-            </div>
+            <div id="concordance-selector-container"></div>
+            <div id="group-selector-container"></div>
+            <div id="connections-container"></div>
         </div>
-        <div id="scan-container" class="visible-when-collapsed">
+        <div id="scan-container">
             <edirom-icon name="qr_code_scanner" size="3rem"></edirom-icon>
         </div>
     </div>
@@ -344,92 +322,17 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     setupElements = () => {
-        // Elements
-        this.concordanceSelector = this.shadow.querySelector("#concordance-selector");
+        // Container elements
+        this.concordanceSelectorContainer = this.shadow.querySelector("#concordance-selector-container");
         this.groupSelectorContainer = this.shadow.querySelector("#group-selector-container");
-        this.groupSelector = this.shadow.querySelector("#group-selector");
-        this.groupSelectorLabel = this.shadow.querySelector("#group-selector-label");
-        this.itemSelector = this.shadow.querySelector("#item-selector");
-        this.itemSlider = this.shadow.querySelector("#item-slider");
-        this.itemSelectorLabel = this.shadow.querySelector("#item-selector-label");
-        this.showConnectionButton = this.shadow.querySelector("#show-connection-button");
-        this.prevConnectionButton = this.shadow.querySelector("#prev-connection-button");
-        this.nextConnectionButton = this.shadow.querySelector("#next-connection-button");
+        this.connectionsContainer = this.shadow.querySelector("#connections-container");
         this.timeContainer = this.shadow.querySelector("#time-container");
-        this.timelineBasisSelector = this.shadow.querySelector("#timeline-basis-selector");
-        this.currentTimeElem = this.shadow.querySelector("#current-time");
-        this.totalTimeElem = this.shadow.querySelector("#total-time");
-        this.playButton = this.shadow.querySelector("#play-button");
         this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
         this.collapseExpandIcon = this.collapseExpandContainer ? this.collapseExpandContainer.querySelector("edirom-icon") : null;
+        this.scanContainer = this.shadow.querySelector("#scan-container");
     }
 
     setupEventListeners = () => {
-        let me = this;
-
-        // Event listeners
-        this.concordanceSelector.addEventListener("change", function () { me.switchConcordance(this.value) });
-        this.groupSelector.addEventListener("change", function () { me.switchGroup(this.value) });
-        this.itemSlider.addEventListener("input", function () {
-            me.timelinePause();
-            me.updateIndex(this.value);
-        });
-        this.itemSlider.addEventListener("change", function () {
-            me.showConnection();
-        });
-
-        this.itemSelector.addEventListener("keypress", function (e) {
-            me.specialKeyOnInput(this, e);
-        });
-        this.itemSelector.addEventListener("focus", () => {
-            me.timelinePause();
-        });
-        this.showConnectionButton.addEventListener("mousedown", () => {
-            // Capture focus state before the click moves focus away from the input.
-            me.itemSelectorWasFocusedOnShowClick = me.shadow.activeElement === me.itemSelector;
-        });
-        this.showConnectionButton.addEventListener("click", function () {
-            me.timelinePause();
-            if (me.itemSelectorWasFocusedOnShowClick) {
-                me.setEnhancedValue(me.itemSelector.value);
-            } else {
-                me.showConnection();
-            }
-            me.itemSelectorWasFocusedOnShowClick = false;
-        });
-        this.prevConnectionButton.addEventListener("click", function () {
-            me.timelinePause();
-            me.showPrevConnection();
-        });
-        this.nextConnectionButton.addEventListener("click", function () {
-            me.timelinePause();
-            me.showNextConnection();
-        });
-        if (this.mode === "desktop") {
-            this.timelineBasisSelector.addEventListener("change", function () { me.switchTimelineBasis(this.value) });
-            this.playButton.addEventListener("click", function () {
-                if (me.timelineState === "pause") {
-                    me.timelinePlay();
-                }
-                else if (me.timelineState === "play") {
-                    me.timelinePause();
-                }
-            });
-            this.currentTimeElem.addEventListener("focus", () => {
-                me.timelinePause();
-            });
-            this.currentTimeElem.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    console.log("Time changed with key press.");
-                    var newTime = this.hhmmssToSeconds(this.currentTimeElem.value);
-                    if (newTime === false) {
-                        newTime = this.currentTime;
-                    }
-                    this.currentTime = newTime;
-                    this.timeChanged();
-                }
-            });
-        }
         if (this.mode === "mobile") {
             this.collapseExpandContainer.addEventListener("click", () => {
                 this.toggleCollapseState();
@@ -470,6 +373,269 @@ class concordanceNavigatorElement extends HTMLElement {
         }
     }
 
+    // ==================== Builder Functions ====================
+
+    buildConcordanceSelector = () => {
+        this.concordanceSelectorContainer.innerHTML = "";
+
+        if (this.concordances.length === 0) return;
+
+        const select = document.createElement("select");
+        select.name = "concordance-selector";
+        select.id = "concordance-selector";
+
+        for (let concordance of this.concordances) {
+            const option = document.createElement("option");
+            option.value = concordance.name;
+            option.text = concordance.name;
+            if (concordance === this.concordances[0]) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+
+        select.addEventListener("change", () => {
+            this.switchConcordance(select.value);
+        });
+
+        this.concordanceSelectorContainer.appendChild(select);
+        this.concordanceSelector = select;
+    }
+
+    buildGroupSelector = (groups, label) => {
+        this.groupSelectorContainer.innerHTML = "";
+
+        if (!groups || groups.length === 0) return;
+
+        if (label) {
+            const labelElem = document.createElement("label");
+            labelElem.setAttribute("for", "group-selector");
+            labelElem.id = "group-selector-label";
+            labelElem.innerHTML = label;
+            this.groupSelectorContainer.appendChild(labelElem);
+        }
+
+        const select = document.createElement("select");
+        select.name = "group-selector";
+        select.id = "group-selector";
+
+        for (let group of groups) {
+            const option = document.createElement("option");
+            option.value = group.name;
+            option.text = group.name;
+            if (group === groups[0]) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+
+        select.addEventListener("change", () => {
+            this.switchGroup(select.value);
+        });
+
+        this.groupSelectorContainer.appendChild(select);
+        this.groupSelector = select;
+    }
+
+    buildConnectionsUI = (connections, label) => {
+        this.connectionsContainer.innerHTML = "";
+
+        if (!connections || connections.length === 0) {
+            this.clearData();
+            return;
+        }
+
+        // Set the data
+        this.setData(connections, "name");
+
+        // Build label
+        if (label) {
+            const labelElem = document.createElement("label");
+            labelElem.setAttribute("for", "item-slider");
+            labelElem.id = "item-selector-label";
+            labelElem.innerHTML = label;
+            this.connectionsContainer.appendChild(labelElem);
+            this.itemSelectorLabel = labelElem;
+        }
+
+        // Build slider
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = this.maxIndex.toString();
+        slider.value = this.index.toString();
+        slider.classList.add("slider");
+        slider.id = "item-slider";
+
+        slider.addEventListener("input", () => {
+            this.timelinePause();
+            this.updateIndex(slider.value);
+        });
+        slider.addEventListener("change", () => {
+            this.showConnection();
+        });
+
+        this.connectionsContainer.appendChild(slider);
+        this.itemSlider = slider;
+
+        // Build buttons container
+        const buttonsContainer = document.createElement("div");
+        buttonsContainer.id = "buttons-container";
+
+        // Previous button
+        const prevButton = document.createElement("button");
+        prevButton.id = "prev-connection-button";
+        const prevIcon = document.createElement("edirom-icon");
+        prevIcon.setAttribute("name", "eo_previous");
+        if (this.mode === "mobile") {
+            prevIcon.setAttribute("size", "2rem");
+        }
+        prevButton.appendChild(prevIcon);
+        prevButton.addEventListener("click", () => {
+            this.timelinePause();
+            this.showPrevConnection();
+        });
+        buttonsContainer.appendChild(prevButton);
+        this.prevConnectionButton = prevButton;
+
+        // Input wrapper
+        const inputWrapper = document.createElement("div");
+        inputWrapper.id = "input-wrapper";
+
+        const itemSelector = document.createElement("input");
+        itemSelector.type = "text";
+        itemSelector.id = "item-selector";
+        itemSelector.value = this.getEnhancedValue();
+        itemSelector.addEventListener("keypress", (e) => {
+            this.specialKeyOnInput(itemSelector, e);
+        });
+        itemSelector.addEventListener("focus", () => {
+            this.timelinePause();
+        });
+        inputWrapper.appendChild(itemSelector);
+        this.itemSelector = itemSelector;
+
+        const showButton = document.createElement("button");
+        showButton.id = "show-connection-button";
+        const showIcon = document.createElement("edirom-icon");
+        showIcon.setAttribute("name", "keyboard_return");
+        showButton.appendChild(showIcon);
+        showButton.addEventListener("mousedown", () => {
+            this.itemSelectorWasFocusedOnShowClick = this.shadow.activeElement === this.itemSelector;
+        });
+        showButton.addEventListener("click", () => {
+            this.timelinePause();
+            if (this.itemSelectorWasFocusedOnShowClick) {
+                this.setEnhancedValue(this.itemSelector.value);
+            } else {
+                this.showConnection();
+            }
+            this.itemSelectorWasFocusedOnShowClick = false;
+        });
+        inputWrapper.appendChild(showButton);
+        this.showConnectionButton = showButton;
+
+        buttonsContainer.appendChild(inputWrapper);
+
+        // Next button
+        const nextButton = document.createElement("button");
+        nextButton.id = "next-connection-button";
+        const nextIcon = document.createElement("edirom-icon");
+        nextIcon.setAttribute("name", "eo_next");
+        if (this.mode === "mobile") {
+            nextIcon.setAttribute("size", "2rem");
+        }
+        nextButton.appendChild(nextIcon);
+        nextButton.addEventListener("click", () => {
+            this.timelinePause();
+            this.showNextConnection();
+        });
+        buttonsContainer.appendChild(nextButton);
+        this.nextConnectionButton = nextButton;
+
+        this.connectionsContainer.appendChild(buttonsContainer);
+    }
+
+    buildTimelineUI = () => {
+        this.timeContainer.innerHTML = "";
+
+        if (this.timelineBasisData.length === 0) return;
+
+        const hr = document.createElement("hr");
+        this.timeContainer.appendChild(hr);
+
+        const select = document.createElement("select");
+        select.name = "timeline-basis-selector";
+        select.id = "timeline-basis-selector";
+
+        for (let item of this.timelineBasisData) {
+            const option = document.createElement("option");
+            option.value = item.siglum;
+            option.text = item.siglum;
+            if (item === this.timelineBasisData[0]) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+
+        select.addEventListener("change", () => {
+            this.switchTimelineBasis(select.value);
+        });
+
+        this.timeContainer.appendChild(select);
+        this.timelineBasisSelector = select;
+
+        const durationContainer = document.createElement("div");
+        durationContainer.classList.add("duration-container");
+
+        const currentTimeInput = document.createElement("input");
+        currentTimeInput.type = "text";
+        currentTimeInput.id = "current-time";
+        currentTimeInput.value = "0:00";
+        currentTimeInput.size = 5;
+        currentTimeInput.addEventListener("focus", () => {
+            this.timelinePause();
+        });
+        currentTimeInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                console.log("Time changed with key press.");
+                let newTime = this.hhmmssToSeconds(currentTimeInput.value);
+                if (newTime === false) {
+                    newTime = this.currentTime;
+                }
+                this.currentTime = newTime;
+                this.timeChanged();
+            }
+        });
+        durationContainer.appendChild(currentTimeInput);
+        this.currentTimeElem = currentTimeInput;
+
+        durationContainer.appendChild(document.createTextNode(" / "));
+
+        const totalTime = document.createElement("div");
+        totalTime.id = "total-time";
+        durationContainer.appendChild(totalTime);
+        this.totalTimeElem = totalTime;
+
+        this.timeContainer.appendChild(durationContainer);
+
+        const playButton = document.createElement("button");
+        playButton.id = "play-button";
+        playButton.innerHTML = "Play";
+        playButton.addEventListener("click", () => {
+            if (this.timelineState === "pause") {
+                this.timelinePlay();
+            } else if (this.timelineState === "play") {
+                this.timelinePause();
+            }
+        });
+        this.timeContainer.appendChild(playButton);
+        this.playButton = playButton;
+
+        this.timeContainer.style.display = "block";
+        this.switchTimelineBasis(select.value);
+    }
+
     static get observedAttributes() {
         return ["concordances-data", "show-connection-button-label-data"];
     }
@@ -490,32 +656,33 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setConcordances();
     }
 
-    getElementsHiddenWhenCollapsed = () => {
-        const container = this.shadow.querySelector("#concordance-navigator-container");
-        if (!container) return [];
-
-        const allElements = Array.from(container.querySelectorAll("*"));
-        return allElements.filter(el => {
-            // Keep the root container visible so its visible children can still render.
-            if (el === container) return false;
-            // If this element is marked visible, keep it visible.
-            if (el.classList.contains('visible-when-collapsed')) return false;
-            // If this element contains any visible-when-collapsed descendant, keep it visible to avoid hiding ancestors.
-            if (el.querySelector('.visible-when-collapsed')) return false;
-            // If any ancestor is marked visible, keep visible (redundant with descendant check but explicit).
-            if (el.closest('.visible-when-collapsed')) return false;
-            // Otherwise it should be hidden.
-            return true;
-        });
+    /**
+     * Determines which container should be visible when collapsed.
+     * Priority: connections > groups > concordances
+     * Returns the container element that should remain visible.
+     */
+    getLowestVisibleContainer = () => {
+        // Check if connections container has content
+        if (this.connectionsContainer && this.connectionsContainer.children.length > 0) {
+            return this.connectionsContainer;
+        }
+        // Check if group selector container has content
+        if (this.groupSelectorContainer && this.groupSelectorContainer.children.length > 0) {
+            return this.groupSelectorContainer;
+        }
+        // Fall back to concordance selector container
+        if (this.concordanceSelectorContainer && this.concordanceSelectorContainer.children.length > 0) {
+            return this.concordanceSelectorContainer;
+        }
+        return null;
     }
 
     setCollapseState = (shouldCollapse) => {
         if (shouldCollapse === this.isCollapsed) return;
         this.isCollapsed = shouldCollapse;
 
-        const elementsToToggle = this.getElementsHiddenWhenCollapsed();
-        for (const el of elementsToToggle) {
-            el.classList.toggle("hidden", shouldCollapse);
+        if (this.mode === "mobile") {
+            this.applyCollapsedState();
         }
 
         if (this.collapseExpandIcon) {
@@ -535,6 +702,30 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setCollapseState(false);
     }
 
+    applyCollapsedState = () => {
+        if (this.mode !== "mobile") return;
+
+        const mainContainers = [
+            this.concordanceSelectorContainer,
+            this.groupSelectorContainer,
+            this.connectionsContainer
+        ].filter(c => c != null);
+
+        if (this.isCollapsed) {
+            // When collapsed, only show the lowest level container with content
+            const lowestVisible = this.getLowestVisibleContainer();
+
+            for (const container of mainContainers) {
+                container.classList.toggle("hidden", container !== lowestVisible);
+            }
+        } else {
+            // When expanded, show all containers
+            for (const container of mainContainers) {
+                container.classList.remove("hidden");
+            }
+        }
+    }
+
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
     }
@@ -551,77 +742,83 @@ class concordanceNavigatorElement extends HTMLElement {
 
     // Fill the menu with concordances
     setConcordances = () => {
-        if (!this.concordanceSelector) return;
-        this.concordanceSelector.innerHTML = ""; // Clear the select
-        for (let concordance of this.concordances) {
-            let option = document.createElement("option");
-            option.value = concordance.name;
-            option.text = concordance.name;
-            if (concordance == this.concordances[0]) { // Select the first concordance
-                option.selected = true;
-            }
-            this.concordanceSelector.appendChild(option);
-        }
+        if (!this.concordanceSelectorContainer) return;
 
-        if (this.concordances.length > 0) { // If there are concordances, switch to the first one
+        this.buildConcordanceSelector();
+
+        if (this.concordances.length > 0) {
             this.switchConcordance(this.concordanceSelector.value);
         }
     }
 
     switchConcordance = (concordanceName) => {
         console.log("Concordance switched!");
-        var concordance = this.concordances.find(concordance => concordance.name === concordanceName);
-        var hasGroups = concordance.groups != null;
+        const concordance = this.concordances.find(c => c.name === concordanceName);
+        const hasGroups = concordance.groups?.groups?.length > 0;
+        const hasDirectConnections = concordance.connections?.connections?.length > 0;
 
         if (hasGroups) {
-            this.groupSelectorContainer.classList.remove("hidden");
-            this.groupSelectorLabel.innerHTML = concordance.groups.label;
-            this.setGroups(concordance.groups.groups);
-        } else {
-            console.log("No groups!");
-            this.groupSelectorContainer.classList.add("hidden");
-            this.itemSelectorLabel.innerHTML = concordance.connections.label;
-            this.setData(concordance.connections.connections, "name");
-            this.itemSelector.value = this.getEnhancedValue();
-            this.fireLayoutChangeEvent();
-        }
-    }
-
-    setGroups = (groups) => {
-        console.log("Groups set!");
-        this.groups = groups;
-        this.groupSelector.innerHTML = ""; // Clear the select
-        for (let group of groups) {
-            let option = document.createElement("option");
-            option.value = group.name;
-            option.text = group.name;
-            if (group == groups[0]) { // Select the first concordance
-                option.selected = true;
-            }
-            this.groupSelector.appendChild(option);
-
-        }
-        if (this.groups.length > 0) { // If there are groups, switch to the first one
+            this.groups = concordance.groups.groups;
+            this.buildGroupSelector(this.groups, concordance.groups.label);
+            // switchGroup will be triggered, which builds connections UI
             this.switchGroup(this.groupSelector.value);
+        } else {
+            // Clear group selector
+            this.groupSelectorContainer.innerHTML = "";
+            this.groups = [];
+
+            if (hasDirectConnections) {
+                console.log("No groups, but has direct connections!");
+                this.buildConnectionsUI(concordance.connections.connections, concordance.connections.label);
+            } else {
+                console.log("No groups and no connections!");
+                this.connectionsContainer.innerHTML = "";
+                this.clearData();
+            }
         }
+
+        // Re-apply collapsed state after UI rebuild
+        if (this.mode === "mobile") {
+            this.applyCollapsedState();
+        }
+
+        this.fireLayoutChangeEvent();
     }
 
     switchGroup = (groupName) => {
         console.log("Group switched!");
-        var group = this.groups.find(group => group.name === groupName);
-        this.setData(group.connections.connections, "name");
-        this.itemSelectorLabel.innerHTML = group.connections.label;
-        this.itemSelector.value = this.getEnhancedValue();
+        const group = this.groups.find(g => g.name === groupName);
+        const hasConnections = group?.connections?.connections?.length > 0;
+
+        if (hasConnections) {
+            this.buildConnectionsUI(group.connections.connections, group.connections.label);
+        } else {
+            console.log("Group has no connections!");
+            this.connectionsContainer.innerHTML = "";
+            this.clearData();
+        }
+
+        // Re-apply collapsed state after UI rebuild
+        if (this.mode === "mobile") {
+            this.applyCollapsedState();
+        }
+
         this.fireLayoutChangeEvent();
     }
 
     setData = (data, labelField) => {
         this.data = data;
         this.labelField = labelField;
-        this.updateIndex(0);
+        this.index = 0;
         this.maxIndex = this.data.length - 1;
-        this.itemSlider.max = this.maxIndex;
         // this.setTimelineBasis(); // Set this to active time based media features (work in progress).
+    }
+
+    clearData = () => {
+        this.data = [];
+        this.labelField = "";
+        this.index = 0;
+        this.maxIndex = 0;
     }
 
     getEnhancedValue = () => {
@@ -660,8 +857,11 @@ class concordanceNavigatorElement extends HTMLElement {
     setTimelineBasis = async () => {
         this.timelineBasisData = [];
         this.timeContainer.style.display = "none";
-        this.timelineBasisSelector.innerHTML = "";
+        this.timeContainer.innerHTML = "";
         this.interval = clearInterval(this.interval);
+
+        if (!this.data || this.data.length === 0) return;
+
         for (let uri of this.data[0].plist.replace(/\s|;/g, '\uC280').split('\uC280')) {
             if (uri.length === 0) continue;
             const data = await this.makeRequest("data/xql/getMeasuresInRecording.xql?uri=" + uri.split("#")[0]);
@@ -681,18 +881,7 @@ class concordanceNavigatorElement extends HTMLElement {
         }
 
         if (this.timelineBasisData.length > 0) {
-            // this.interval = setInterval(this.runInterval, 1000);
-            this.timeContainer.style.display = "block";
-            for (let item of this.timelineBasisData) {
-                let option = document.createElement("option");
-                option.value = item.siglum;
-                option.text = item.siglum;
-                if (item == this.timelineBasisData[0]) {
-                    option.selected = true;
-                }
-                this.timelineBasisSelector.appendChild(option);
-            }
-            this.switchTimelineBasis(this.timelineBasisSelector.value);
+            this.buildTimelineUI();
         }
     }
 
@@ -829,15 +1018,22 @@ class concordanceNavigatorElement extends HTMLElement {
         var newIndex = parseInt(newIndex);
         if (newIndex < 0 || newIndex > this.maxIndex) return false; // Prevent out of bounds
         this.index = newIndex;
-        this.itemSlider.value = this.index;
-        this.itemSelector.value = this.getEnhancedValue();
+
+        if (this.itemSlider) {
+            this.itemSlider.value = this.index;
+        }
+        if (this.itemSelector && this.data.length > 0) {
+            this.itemSelector.value = this.getEnhancedValue();
+        }
 
         if (updateTime && this.timelineBasis) {
             var basisMeasure = this.timelineBasis.measures.find(measure => measure.measureLabel === this.getEnhancedValue());
             if (basisMeasure) {
                 console.log("Updating time!");
                 this.currentTime = basisMeasure.begin;
-                this.currentTimeElem.value = this.secondsToHhmmss(this.currentTime);
+                if (this.currentTimeElem) {
+                    this.currentTimeElem.value = this.secondsToHhmmss(this.currentTime);
+                }
             }
         }
         return true;
