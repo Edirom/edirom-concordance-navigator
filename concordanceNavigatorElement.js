@@ -1,7 +1,7 @@
 import '../edirom-core-web-components/src/edirom-icon.js';
 
 
-console.log("ConcordanceNavigator Webcomponent loaded");
+console.log("ConcordanceNavigator Webcomponent loaded3");
 
 
 const templates = {
@@ -313,13 +313,8 @@ const templates = {
 class concordanceNavigatorElement extends HTMLElement {
     constructor() {
         super();
-        let me = this;
-        this.mode = this.getAttribute('layout-mode') === 'mobile' ? 'mobile' : 'desktop';
-        const template = document.createElement("template");
-        template.innerHTML = templates[this.mode];
-        this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
+        this.mode = this.getLayoutMode(this.getAttribute('layout-mode'));
         this.shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
-        this.shadow.append(template.content.cloneNode(true))
         this.concordances = [];
         this.groups = [];
         this.data = [];
@@ -337,7 +332,18 @@ class concordanceNavigatorElement extends HTMLElement {
         this.swipeThreshold = 30; // Minimum vertical distance (px) to treat as swipe
         this.itemSelectorWasFocusedOnShowClick = false;
         this.isCollapsed = false;
+    }
 
+    getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
+
+    applyTemplate = () => {
+        const template = document.createElement("template");
+        template.innerHTML = templates[this.mode];
+        this.shadow.innerHTML = '';
+        this.shadow.append(template.content.cloneNode(true));
+    }
+
+    setupElements = () => {
         // Elements
         this.concordanceSelector = this.shadow.querySelector("#concordance-selector");
         this.groupSelectorContainer = this.shadow.querySelector("#group-selector-container");
@@ -356,6 +362,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.playButton = this.shadow.querySelector("#play-button");
         this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
         this.collapseExpandIcon = this.collapseExpandContainer ? this.collapseExpandContainer.querySelector("edirom-icon") : null;
+    }
+
+    setupEventListeners = () => {
+        let me = this;
 
         // Event listeners
         this.concordanceSelector.addEventListener("change", function () { me.switchConcordance(this.value) });
@@ -458,7 +468,6 @@ class concordanceNavigatorElement extends HTMLElement {
             // Default to collapsed on mobile so only marked elements remain visible.
             this.setCollapseState(true);
         }
-
     }
 
     static get observedAttributes() {
@@ -473,6 +482,11 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     connectedCallback() {
+        this.mode = this.getLayoutMode(this.getAttribute('layout-mode'));
+        this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
+        this.applyTemplate();
+        this.setupElements();
+        this.setupEventListeners();
     }
 
     getElementsHiddenWhenCollapsed = () => {
@@ -743,14 +757,14 @@ class concordanceNavigatorElement extends HTMLElement {
 
     timelinePause = () => {
         if (this.mode === "desktop") {
-        this.timelineState = "pause";
-        this.playButton.innerHTML = "Play";
-        clearInterval(this.stopwatch.intervalId);
-        const changedPlayPauseStatus = new CustomEvent('changed-play-pause-status', {
-            detail: { newStatus: this.timelineState },
-            bubbles: true
-        });
-        this.dispatchEvent(changedPlayPauseStatus);
+            this.timelineState = "pause";
+            this.playButton.innerHTML = "Play";
+            clearInterval(this.stopwatch.intervalId);
+            const changedPlayPauseStatus = new CustomEvent('changed-play-pause-status', {
+                detail: { newStatus: this.timelineState },
+                bubbles: true
+            });
+            this.dispatchEvent(changedPlayPauseStatus);
         }
     }
 
