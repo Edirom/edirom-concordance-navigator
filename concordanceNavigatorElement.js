@@ -487,6 +487,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.applyTemplate();
         this.setupElements();
         this.setupEventListeners();
+        this.setConcordances();
     }
 
     getElementsHiddenWhenCollapsed = () => {
@@ -550,6 +551,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
     // Fill the menu with concordances
     setConcordances = () => {
+        if (!this.concordanceSelector) return;
         this.concordanceSelector.innerHTML = ""; // Clear the select
         for (let concordance of this.concordances) {
             let option = document.createElement("option");
