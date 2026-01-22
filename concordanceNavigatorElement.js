@@ -313,6 +313,8 @@ class concordanceNavigatorElement extends HTMLElement {
         this.swipeThreshold = 30; // Minimum vertical distance (px) to treat as swipe
         this.itemSelectorWasFocusedOnShowClick = false;
         this.isCollapsed = false;
+        this.rawConcordances = [];
+        this.injectDisabledConcordanceName = this.getAttribute("inject-disabled-concordance");
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -378,7 +380,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
     // ==================== Builder Functions ====================
 
-    buildConcordanceSelector = () => {
+    buildConcordanceSelector = (selectedName) => {
         this.concordanceSelectorContainer.innerHTML = "";
 
         if (this.concordances.length === 0) return;
@@ -391,7 +393,8 @@ class concordanceNavigatorElement extends HTMLElement {
             const option = document.createElement("option");
             option.value = concordance.name;
             option.text = concordance.name;
-            if (concordance === this.concordances[0]) {
+            const shouldSelect = selectedName ? concordance.name === selectedName : concordance === this.concordances[0];
+            if (shouldSelect) {
                 option.selected = true;
             }
             select.appendChild(option);
@@ -640,7 +643,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["concordances-data", "show-connection-button-label-data"];
+        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance"];
     }
 
     get concordancesData() {
@@ -742,17 +745,37 @@ class concordanceNavigatorElement extends HTMLElement {
         console.log(name, oldValue, newValue);
         if (oldValue === newValue) return;
         if (name === "concordances-data") {
-            this.concordances = JSON.parse(newValue);
+            this.rawConcordances = JSON.parse(newValue);
+            this.setConcordances();
+        }
+        if (name === "inject-disabled-concordance") {
+            this.injectDisabledConcordanceName = newValue || null;
             this.setConcordances();
         }
 
     }
 
     // Fill the menu with concordances
+    getConcordancesWithInjection = () => {
+        const baseConcordances = Array.isArray(this.rawConcordances) ? [...this.rawConcordances] : [];
+        if (!this.injectDisabledConcordanceName) {
+            return baseConcordances;
+        }
+        const filteredBase = baseConcordances.filter(c => c && c.name !== this.injectDisabledConcordanceName);
+        return [{ name: this.injectDisabledConcordanceName, groups: null, connections: null }, ...filteredBase];
+    }
+
     setConcordances = () => {
         if (!this.concordanceSelectorContainer) return;
 
-        this.buildConcordanceSelector();
+        const previousSelection = this.concordanceSelector?.value;
+        this.concordances = this.getConcordancesWithInjection();
+
+        const desiredSelection = previousSelection && this.concordances.some(c => c.name === previousSelection)
+            ? previousSelection
+            : (this.concordances[0]?.name || null);
+
+        this.buildConcordanceSelector(desiredSelection);
 
         if (this.concordances.length > 0) {
             this.switchConcordance(this.concordanceSelector.value);
@@ -762,6 +785,13 @@ class concordanceNavigatorElement extends HTMLElement {
     switchConcordance = (concordanceName) => {
         console.log("Concordance switched!");
         const concordance = this.concordances.find(c => c.name === concordanceName);
+        if (!concordance) {
+            this.groupSelectorContainer.innerHTML = "";
+            this.connectionsContainer.innerHTML = "";
+            this.clearData();
+            return;
+        }
+        const isDisabledConcordance = this.injectDisabledConcordanceName && concordanceName === this.injectDisabledConcordanceName;
         const hasGroups = concordance.groups?.groups?.length > 0;
         const hasDirectConnections = concordance.connections?.connections?.length > 0;
 
@@ -788,6 +818,13 @@ class concordanceNavigatorElement extends HTMLElement {
         // Re-apply collapsed state after UI rebuild
         if (this.mode === "mobile") {
             this.applyCollapsedState();
+        }
+
+        if (isDisabledConcordance) {
+            const disabledEvent = new CustomEvent('concordance-navigator-disabled', {
+                bubbles: true
+            });
+            this.dispatchEvent(disabledEvent);
         }
 
         this.fireLayoutChangeEvent();
