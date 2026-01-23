@@ -560,6 +560,9 @@ class concordanceNavigatorElement extends HTMLElement {
         this.nextConnectionButton = nextButton;
 
         this.connectionsContainer.appendChild(buttonsContainer);
+
+        // Ensure slider visibility matches current collapse state on mobile.
+        this.updateCollapsibleControlsVisibility();
     }
 
     buildTimelineUI = () => {
@@ -735,6 +738,14 @@ class concordanceNavigatorElement extends HTMLElement {
                 container.classList.remove("hidden");
             }
         }
+
+        this.updateCollapsibleControlsVisibility();
+    }
+
+    updateCollapsibleControlsVisibility = () => {
+        // Only hide the slider on mobile when collapsed; keep build logic unchanged.
+        if (this.mode !== "mobile" || !this.itemSlider) return;
+        this.itemSlider.classList.toggle("hidden", this.isCollapsed);
     }
 
     disconnectedCallback() {
