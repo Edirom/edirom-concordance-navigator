@@ -805,6 +805,7 @@ class concordanceNavigatorElement extends HTMLElement {
         const isDisabledConcordance = this.injectDisabledConcordanceName && concordanceName === this.injectDisabledConcordanceName;
         const hasGroups = concordance.groups?.groups?.length > 0;
         const hasDirectConnections = concordance.connections?.connections?.length > 0;
+        let shouldFireShowConnection = false;
 
         if (hasGroups) {
             this.groups = concordance.groups.groups;
@@ -819,6 +820,7 @@ class concordanceNavigatorElement extends HTMLElement {
             if (hasDirectConnections) {
                 console.log("No groups, but has direct connections!");
                 this.buildConnectionsUI(concordance.connections.connections, concordance.connections.label);
+                shouldFireShowConnection = this.data.length > 0;
             } else {
                 console.log("No groups and no connections!");
                 this.connectionsContainer.innerHTML = "";
@@ -830,6 +832,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setCollapseState(false);
         if (this.mode === "mobile") {
             this.applyCollapsedState();
+        }
+
+        if (shouldFireShowConnection) {
+            this.showConnection();
         }
 
         if (isDisabledConcordance) {
@@ -846,6 +852,7 @@ class concordanceNavigatorElement extends HTMLElement {
         console.log("Group switched!");
         const group = this.groups.find(g => g.name === groupName);
         const hasConnections = group?.connections?.connections?.length > 0;
+        const shouldFireShowConnection = hasConnections;
 
         if (hasConnections) {
             this.buildConnectionsUI(group.connections.connections, group.connections.label);
@@ -859,6 +866,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setCollapseState(false);
         if (this.mode === "mobile") {
             this.applyCollapsedState();
+        }
+
+        if (shouldFireShowConnection && this.data.length > 0) {
+            this.showConnection();
         }
 
         this.fireLayoutChangeEvent();
