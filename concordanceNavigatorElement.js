@@ -1,7 +1,7 @@
 import '../edirom-core-web-components/src/edirom-icon.js';
 
 
-console.log("ConcordanceNavigator Webcomponent loaded3");
+console.log("ConcordanceNavigator Webcomponent loaded");
 
 
 const templates = {
@@ -274,16 +274,16 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="collapse-expand-container">
-            <edirom-icon name="swipe_up" size="2rem"></edirom-icon>
+        <div id="scan-container">
+            <edirom-icon name="qr_code_scanner" size="2.5rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
             <div id="concordance-selector-container"></div>
             <div id="group-selector-container"></div>
             <div id="connections-container"></div>
         </div>
-        <div id="scan-container">
-            <edirom-icon name="qr_code_scanner" size="3rem"></edirom-icon>
+        <div id="collapse-expand-container">
+            <edirom-icon name="swipe_up" size="1.5rem"></edirom-icon>
         </div>
     </div>
 </div>
