@@ -180,24 +180,58 @@ const templates = {
             position: relative;
             flex-grow: 1;
             margin: 3px;
-        }
-
-        #item-selector {
-            width: 100%;
-            height: 35px;
-            box-sizing: border-box;
-            padding-right: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: var(--ewk-tertiary-color);
             border: 1px solid var(--nav-surface-border);
             border-radius: 8px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+            height: 35px;
+            box-sizing: border-box;
+            overflow: hidden;
+            padding-left: 8px;
+            padding-right: 40px;
+        }
+
+        #input-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+        }
+
+        #item-selector-prefix {
+            margin-right: 4px;
+            font-size: 0.8rem;
+            color: #1a1a1a;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        #item-selector {
+            width: 1px;
+            flex-grow: 0;
+            flex-shrink: 0;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 0;
+            background: transparent;
+            border: none;
             color: #1a1a1a;
             font-size: 1rem;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+            text-align: left;
+        }
+
+        #input-wrapper:focus-within {
+            outline: 2px solid var(--nav-contrast);
+            outline-offset: 2px;
         }
 
         #item-selector:focus {
-            outline: 2px solid var(--nav-contrast);
-            outline-offset: 2px;
+            outline: none;
         }
 
         #buttons-container {
@@ -453,8 +487,9 @@ class concordanceNavigatorElement extends HTMLElement {
         // Set the data
         this.setData(connections, "name");
 
-        // Build label
-        if (label) {
+        // Build label (desktop: separate label element, mobile: inline prefix)
+        this.itemSelectorLabelText = label || "";
+        if (label && this.mode === "desktop") {
             const labelElem = document.createElement("label");
             labelElem.setAttribute("for", "item-slider");
             labelElem.id = "item-selector-label";
@@ -507,17 +542,62 @@ class concordanceNavigatorElement extends HTMLElement {
         const inputWrapper = document.createElement("div");
         inputWrapper.id = "input-wrapper";
 
+        // On mobile, clicking anywhere on the wrapper should focus the input
+        if (this.mode === "mobile") {
+            inputWrapper.addEventListener("click", (e) => {
+                // Don't focus if clicking on the show button
+                if (e.target.closest("#show-connection-button")) return;
+                itemSelector.focus();
+            });
+        }
+
+        // On mobile, wrap prefix and input in an inner container for centering
+        let inputContainer = inputWrapper;
+        if (this.mode === "mobile") {
+            const innerContent = document.createElement("div");
+            innerContent.id = "input-content";
+            inputWrapper.appendChild(innerContent);
+            inputContainer = innerContent;
+
+            // Add prefix only if there's actual label text
+            if (this.itemSelectorLabelText && this.itemSelectorLabelText.trim()) {
+                const prefixSpan = document.createElement("span");
+                prefixSpan.id = "item-selector-prefix";
+                prefixSpan.textContent = this.itemSelectorLabelText + " ";
+                inputContainer.appendChild(prefixSpan);
+                this.itemSelectorPrefix = prefixSpan;
+            }
+        }
+
         const itemSelector = document.createElement("input");
         itemSelector.type = "text";
         itemSelector.id = "item-selector";
         itemSelector.value = this.getEnhancedValue();
+
+        // On mobile, dynamically size input based on content
+        if (this.mode === "mobile") {
+            const updateInputWidth = () => {
+                const tempSpan = document.createElement("span");
+                tempSpan.style.cssText = "visibility:hidden;position:absolute;white-space:pre;font-size:1rem;";
+                tempSpan.textContent = itemSelector.value || " ";
+                document.body.appendChild(tempSpan);
+                const textWidth = tempSpan.offsetWidth;
+                document.body.removeChild(tempSpan);
+                itemSelector.style.width = Math.max(20, textWidth + 4) + "px";
+            };
+            itemSelector.addEventListener("input", updateInputWidth);
+            // Initial sizing after element is in DOM
+            setTimeout(updateInputWidth, 0);
+            this._updateInputWidth = updateInputWidth;
+        }
+
         itemSelector.addEventListener("keypress", (e) => {
             this.specialKeyOnInput(itemSelector, e);
         });
         itemSelector.addEventListener("focus", () => {
             this.timelinePause();
         });
-        inputWrapper.appendChild(itemSelector);
+        inputContainer.appendChild(itemSelector);
         this.itemSelector = itemSelector;
 
         const showButton = document.createElement("button");
@@ -1092,6 +1172,10 @@ class concordanceNavigatorElement extends HTMLElement {
         }
         if (this.itemSelector && this.data.length > 0) {
             this.itemSelector.value = this.getEnhancedValue();
+            // Update dynamic input width on mobile
+            if (this._updateInputWidth) {
+                this._updateInputWidth();
+            }
         }
 
         if (updateTime && this.timelineBasis) {
