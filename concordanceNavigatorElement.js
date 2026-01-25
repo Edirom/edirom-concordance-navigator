@@ -596,6 +596,11 @@ class concordanceNavigatorElement extends HTMLElement {
         });
         itemSelector.addEventListener("focus", () => {
             this.timelinePause();
+            if (this.mode === "mobile") {
+                setTimeout(() => {
+                    itemSelector.scrollIntoView({ "alignToTop": true });
+                }, 300);
+            }
         });
         inputContainer.appendChild(itemSelector);
         this.itemSelector = itemSelector;
