@@ -168,7 +168,6 @@ const templates = {
             border-radius: 10px;
             color: var(--nav-contrast);
             font-size: 1rem;
-            margin-bottom: 8px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
         }
