@@ -6,7 +6,6 @@ console.log("ConcordanceNavigator Webcomponent loaded");
 
 const templates = {
     desktop: `
-<div>
     <style>
         #concordance-navigator-container, #item-selector-container, #group-selector-container, #concordance-selector-container {
             display: flex;
@@ -89,10 +88,9 @@ const templates = {
         <div id="connections-container"></div>
         <div id="time-container"></div>
     </div>
-</div>
 `,
 
-    mobile: `<div>
+    mobile: `
     <style>
         :host {
             overscroll-behavior: contain; /* Prevent pull-to-refresh on supported browsers */
@@ -319,7 +317,6 @@ const templates = {
             <edirom-icon name="swipe_up" size="1.5rem"></edirom-icon>
         </div>
     </div>
-</div>
 `
 };
 
@@ -741,6 +738,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     connectedCallback() {
+        console.log("Concordance Navigator connected!");
         this.mode = this.getLayoutMode(this.getAttribute('layout-mode'));
         this.tabIndex = 0; // Make the host focusable and let clicks delegate focus into the shadow DOM so inputs behave on first click.
         this.applyTemplate();
@@ -1087,6 +1085,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     timelinePlay = () => {
+        if (!this.playButton) return;
         this.timelineState = "play";
         this.playButton.innerHTML = "Pause";
         this.startStopwatch();
@@ -1100,7 +1099,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     timelinePause = () => {
-        if (this.mode === "desktop") {
+        if (this.mode === "desktop" && this.playButton) {
             this.timelineState = "pause";
             this.playButton.innerHTML = "Play";
             clearInterval(this.stopwatch.intervalId);
