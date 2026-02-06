@@ -13,6 +13,25 @@ const templates = {
             flex-direction: column;
         }
 
+        #concordance-navigator-container {
+            align-items: center;
+            width: 100%;
+        }
+
+        #concordance-selector-container, #group-selector-container, #connections-container, #time-container {
+            width: 100%;
+            align-self: center;
+        }
+
+        #connections-container {
+            align-items: center;
+        }
+
+        .slider {
+            width: 90%;
+            box-sizing: border-box;
+        }
+
         #concordance-selector, #group-selector, #item-selector {
             text-align: center;
         }
