@@ -384,6 +384,8 @@ class concordanceNavigatorElement extends HTMLElement {
         this.collapseExpandContainer = this.shadow.querySelector("#collapse-expand-container");
         this.collapseExpandIcon = this.collapseExpandContainer ? this.collapseExpandContainer.querySelector("edirom-icon") : null;
         this.scanContainer = this.shadow.querySelector("#scan-container");
+
+        this.updateScanContainerVisibility();
     }
 
     setupEventListeners = () => {
@@ -746,7 +748,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance"];
+        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner"];
     }
 
     get concordancesData() {
@@ -849,6 +851,14 @@ class concordanceNavigatorElement extends HTMLElement {
         this.itemSlider.classList.toggle("hidden", this.isCollapsed);
     }
 
+    updateScanContainerVisibility = () => {
+        if (!this.scanContainer) return;
+        const enabled = this.hasAttribute("enable-qr-code-scanner");
+        this.scanContainer.style.visibility = enabled ? "visible" : "hidden";
+        this.scanContainer.style.pointerEvents = enabled ? "auto" : "none";
+        this.scanContainer.setAttribute("aria-hidden", enabled ? "false" : "true");
+    }
+
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
     }
@@ -863,6 +873,9 @@ class concordanceNavigatorElement extends HTMLElement {
         if (name === "inject-disabled-concordance") {
             this.injectDisabledConcordanceName = newValue || null;
             this.setConcordances();
+        }
+        if (name === "enable-qr-code-scanner") {
+            this.updateScanContainerVisibility();
         }
 
     }
