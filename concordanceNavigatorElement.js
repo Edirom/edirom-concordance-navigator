@@ -1026,6 +1026,12 @@ class concordanceNavigatorElement extends HTMLElement {
         scanner.setAttribute("aspect-ratio", "1");
         scanner.addEventListener("qr-code-scanned", (e) => {
             console.log("QR Code scanned:", e.detail.text);
+            const paused = scanner.pauseScanner(true);
+            if (!paused) {
+                scanner.stopScanner().catch((err) => {
+                    console.error("Failed to stop QR scanner after scan", err);
+                });
+            }
         });
 
         this._scannerContainer.appendChild(scanner);
