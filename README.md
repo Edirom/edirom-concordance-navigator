@@ -69,9 +69,11 @@ The primary way to provide data to the component. It expects a JSON string (as a
 
 ---
 
-### `layout-mode` (Attribute / Property)
+### `layout-mode` (Attribute)
 
 Controls the layout and behavior of the component.
+
+> **Note:** Unlike `concordances-data`, `inject-disabled-concordance`, and `enable-qr-code-scanner`, this attribute is **not observed** after the element connects to the DOM. Set it in the HTML markup (or as a JavaScript attribute before inserting the element into the document); changing it later has no effect.
 
 **Possible Values:**
 
