@@ -366,6 +366,11 @@ class concordanceNavigatorElement extends HTMLElement {
         this.rawConcordances = [];
         this.injectDisabledConcordanceName = this.getAttribute("inject-disabled-concordance");
         this._scannerPopover = null;
+        this._scannerContainer = null;
+        this._qrScannerElement = null;
+        this._popoverToggleHandler = null;
+        this._documentVisibilityHandler = null;
+        this._pageHideHandler = null;
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -436,6 +441,22 @@ class concordanceNavigatorElement extends HTMLElement {
             this.scanContainer.addEventListener("click", () => {
                 this._scannerPopover.showPopover();
             });
+
+            if (!this._documentVisibilityHandler) {
+                this._documentVisibilityHandler = () => {
+                    if (document.hidden) {
+                        this._releaseScannerForInactivity();
+                    }
+                };
+                document.addEventListener("visibilitychange", this._documentVisibilityHandler);
+            }
+
+            if (!this._pageHideHandler) {
+                this._pageHideHandler = () => {
+                    this._releaseScannerForInactivity();
+                };
+                window.addEventListener("pagehide", this._pageHideHandler);
+            }
         }
     }
 
@@ -933,6 +954,7 @@ class concordanceNavigatorElement extends HTMLElement {
             "overflow: hidden",
             "flex-shrink: 1",
         ].join(";");
+        this._scannerContainer = scannerContainer;
 
 
         topGroup.appendChild(scannerContainer);
@@ -976,30 +998,94 @@ class concordanceNavigatorElement extends HTMLElement {
         document.body.appendChild(popover);
         this._scannerPopover = popover;
 
-        popover.addEventListener("toggle", (event) => {
+        this._popoverToggleHandler = async (event) => {
             if (event.newState === "open") {
-                const scanner = document.createElement("edirom-qr-code-scanner");
-                scanner.setAttribute("aspect-ratio", "1");
-                scannerContainer.appendChild(scanner);
-                // connectedCallback fires → camera starts
-
-                scanner.addEventListener("qr-code-scanned", (e) => {
-                    console.log("QR Code scanned:", e.detail.text);
-                });
+                const scanner = this._ensureScannerElement();
+                const resumed = scanner.resumeScanner();
+                if (!resumed) {
+                    try {
+                        await scanner.startScanner();
+                    } catch (err) {
+                        console.error("Failed to start QR scanner", err);
+                    }
+                }
             } else {
-                // Remove the scanner element to trigger disconnectedCallback → camera stops
-                const scanner = scannerContainer.querySelector("edirom-qr-code-scanner");
-                if (scanner) scanner.remove();
+                await this._pauseOrStopScanner();
             }
+        };
+
+        popover.addEventListener("toggle", this._popoverToggleHandler);
+    }
+
+    _ensureScannerElement = () => {
+        if (this._qrScannerElement) {
+            return this._qrScannerElement;
+        }
+
+        const scanner = document.createElement("edirom-qr-code-scanner");
+        scanner.setAttribute("aspect-ratio", "1");
+        scanner.addEventListener("qr-code-scanned", (e) => {
+            console.log("QR Code scanned:", e.detail.text);
         });
+
+        this._scannerContainer.appendChild(scanner);
+        this._qrScannerElement = scanner;
+        return scanner;
+    }
+
+    _pauseOrStopScanner = async () => {
+        if (!this._qrScannerElement) return;
+
+        const paused = this._qrScannerElement.pauseScanner(true);
+        if (!paused) {
+            try {
+                await this._qrScannerElement.stopScanner();
+            } catch (err) {
+                console.error("Failed to stop QR scanner", err);
+            }
+        }
+    }
+
+    _releaseScannerForInactivity = async () => {
+        if (this._scannerPopover && this._scannerPopover.matches(":popover-open")) {
+            this._scannerPopover.hidePopover();
+        }
+
+        if (!this._qrScannerElement) return;
+        try {
+            await this._qrScannerElement.stopScanner();
+        } catch (err) {
+            console.error("Failed to stop scanner on inactivity", err);
+        }
     }
 
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
+
+        if (this._documentVisibilityHandler) {
+            document.removeEventListener("visibilitychange", this._documentVisibilityHandler);
+            this._documentVisibilityHandler = null;
+        }
+
+        if (this._pageHideHandler) {
+            window.removeEventListener("pagehide", this._pageHideHandler);
+            this._pageHideHandler = null;
+        }
+
+        this._releaseScannerForInactivity();
+
+        if (this._scannerPopover && this._popoverToggleHandler) {
+            this._scannerPopover.removeEventListener("toggle", this._popoverToggleHandler);
+            this._popoverToggleHandler = null;
+        }
+
         if (this._scannerPopover) {
             this._scannerPopover.remove();
             this._scannerPopover = null;
         }
+
+        this._scannerContainer = null;
+        this._qrScannerElement = null;
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
