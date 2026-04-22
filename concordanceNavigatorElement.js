@@ -1,4 +1,5 @@
 import '../edirom-core-web-components/src/edirom-icon.js';
+import '../edirom-qr-code-scanner/edirom-qr-code-scanner.js';
 
 
 console.log("ConcordanceNavigator Webcomponent loaded");
@@ -325,7 +326,7 @@ const templates = {
     </style>
     <div id="concordance-navigator-container">
         <div id="scan-container">
-            <edirom-icon name="qr_code_scanner" size="2.5rem"></edirom-icon>
+            <edirom-icon name="qr_code_scanner" size="2.0rem"></edirom-icon>
         </div>
         <div id="main-controls-container">
             <div id="concordance-selector-container"></div>
@@ -364,6 +365,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.isCollapsed = false;
         this.rawConcordances = [];
         this.injectDisabledConcordanceName = this.getAttribute("inject-disabled-concordance");
+        this._scannerPopover = null;
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -386,6 +388,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.scanContainer = this.shadow.querySelector("#scan-container");
 
         this.updateScanContainerVisibility();
+
+        if (this.mode === "mobile") {
+            this._buildScannerPopover();
+        }
     }
 
     setupEventListeners = () => {
@@ -426,6 +432,10 @@ class concordanceNavigatorElement extends HTMLElement {
 
             // Default to collapsed on mobile so only marked elements remain visible.
             this.setCollapseState(true);
+
+            this.scanContainer.addEventListener("click", () => {
+                this._scannerPopover.showPopover();
+            });
         }
     }
 
@@ -859,8 +869,137 @@ class concordanceNavigatorElement extends HTMLElement {
         this.scanContainer.setAttribute("aria-hidden", enabled ? "false" : "true");
     }
 
+    _buildScannerPopover = () => {
+        // The popover is appended to document.body rather than the shadow root.
+        // This is required because the edirom-qr-code-scanner component uses
+        // document.getElementById() internally (via the html5-qrcode library),
+        // which cannot cross a Shadow Root boundary.
+        const popover = document.createElement("div");
+        popover.popover = "manual";
+        // Do NOT set display here — the Popover API hides elements via display:none
+        // on the UA stylesheet. An explicit display inline style would override that,
+        // causing the popover to be permanently visible even when "hidden".
+        popover.style.cssText = [
+            "margin: 0",
+            "padding: 0",
+            "border: none",
+            "width: 100dvw",
+            "height: 100dvh",
+            "box-sizing: border-box",
+            "background: rgba(0, 0, 0, 0.85)",
+        ].join(";");
+
+        // Inner wrapper carries the flex layout so it never interferes with the
+        // browser's display:none that the Popover API uses to hide the popover.
+        const inner = document.createElement("div");
+        inner.style.cssText = [
+            "display: flex",
+            "flex-direction: column",
+            "align-items: center",
+            "justify-content: space-between",
+            "width: 100%",
+            "height: 100%",
+            "padding: 24px",
+            "box-sizing: border-box",
+        ].join(";");
+
+        // Top group: instruction text + camera feed, stacked vertically and
+        // centred horizontally. flex-grow: 1 lets it fill the available space
+        // above the button row.
+        const topGroup = document.createElement("div");
+        topGroup.style.cssText = [
+            "display: flex",
+            "flex-direction: column",
+            "align-items: center",
+            "flex-grow: 1",
+            "width: 100%",
+        ].join(";");
+
+        const scannerInstruction = document.createElement("p");
+        scannerInstruction.textContent = "Bandkontext wechseln durch QR-Code";
+        scannerInstruction.style.cssText = [
+            "color: #e4d9a5",
+            "font-size: 1rem",
+            "text-align: center",
+            "margin: 16px 0 5px 0px",
+            "padding: 0 16px",
+            "flex-shrink: 0",
+        ].join(";");
+
+        const scannerContainer = document.createElement("div");
+        scannerContainer.style.cssText = [
+            "width: 100%",
+            "border-radius: 12px",
+            "overflow: hidden",
+            "flex-shrink: 1",
+        ].join(";");
+
+
+        topGroup.appendChild(scannerContainer);
+        topGroup.appendChild(scannerInstruction);
+
+        // Button row — sits at the bottom, right-aligned so buttons are
+        // reachable by the thumb. Add further buttons here in the future.
+        const buttonRow = document.createElement("div");
+        buttonRow.style.cssText = [
+            "display: flex",
+            "flex-direction: row",
+            "justify-content: flex-end",
+            "align-items: center",
+            "width: 100%",
+            "gap: 12px",
+            "flex-shrink: 0",
+        ].join(";");
+
+        const closeButton = document.createElement("button");
+        closeButton.textContent = "Schließen";
+        closeButton.setAttribute("aria-label", "QR-Code-Scanner schließen");
+        closeButton.style.cssText = [
+            "padding: 12px 28px",
+            "font-size: 1rem",
+            "cursor: pointer",
+            "border: none",
+            "border-radius: 8px",
+            "background: #e4d9a5",
+            "color: #1f2333",
+            "font-weight: bold",
+        ].join(";");
+        closeButton.addEventListener("click", () => {
+            popover.hidePopover();
+        });
+
+        buttonRow.appendChild(closeButton);
+
+        popover.appendChild(inner);
+        inner.appendChild(topGroup);
+        inner.appendChild(buttonRow);
+        document.body.appendChild(popover);
+        this._scannerPopover = popover;
+
+        popover.addEventListener("toggle", (event) => {
+            if (event.newState === "open") {
+                const scanner = document.createElement("edirom-qr-code-scanner");
+                scanner.setAttribute("aspect-ratio", "1");
+                scannerContainer.appendChild(scanner);
+                // connectedCallback fires → camera starts
+
+                scanner.addEventListener("qr-code-scanned", (e) => {
+                    console.log("QR Code scanned:", e.detail.text);
+                });
+            } else {
+                // Remove the scanner element to trigger disconnectedCallback → camera stops
+                const scanner = scannerContainer.querySelector("edirom-qr-code-scanner");
+                if (scanner) scanner.remove();
+            }
+        });
+    }
+
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
+        if (this._scannerPopover) {
+            this._scannerPopover.remove();
+            this._scannerPopover = null;
+        }
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
