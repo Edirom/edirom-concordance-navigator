@@ -159,6 +159,8 @@ const templates = {
             justify-content: center;
             min-width: 0;
             flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #connections-container, #group-selector-container, #concordance-selector-container {
@@ -188,6 +190,8 @@ const templates = {
             font-size: 1rem;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #concordance-selector:hover, #group-selector:hover {
@@ -274,6 +278,8 @@ const templates = {
             align-items: center;
             justify-content: center;
             line-height: 1;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #prev-connection-button:hover, #next-connection-button:hover {
@@ -296,6 +302,8 @@ const templates = {
             font-size: 0.8em;
             border-radius: 0 8px 8px 0;
             color: #2d2d2d;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #show-connection-button:hover {
