@@ -113,6 +113,33 @@ A boolean attribute. When present, a QR code scanner icon is made visible in `mo
 
 ---
 
+### `current-connection` (Attribute)
+
+Optional connection ID used to programmatically select an initial connection.
+
+The component searches for a matching connection object by its `id` field across:
+
+- direct concordance-level connections
+- group-level connections inside concordances
+
+If a match is found, the component switches concordance/group as needed, selects the matching connection index, and emits the normal `show-connection-request` event.
+
+If no match is found, no connection is changed.
+
+For imperative integrations, hosts can call `navigateToConnectionById(connectionId)` directly. The method returns `true` if a connection was selected and `false` otherwise.
+
+**Example:**
+
+```html
+<edirom-concordance-navigator
+  layout-mode="mobile"
+  current-connection="test2"
+>
+</edirom-concordance-navigator>
+```
+
+---
+
 ## Events
 
 ### `show-connection-request`

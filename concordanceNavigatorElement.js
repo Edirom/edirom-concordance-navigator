@@ -379,6 +379,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this._popoverToggleHandler = null;
         this._documentVisibilityHandler = null;
         this._pageHideHandler = null;
+        this._suppressShowConnection = false;
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -787,7 +788,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner"];
+        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner", "current-connection"];
     }
 
     get concordancesData() {
@@ -1116,6 +1117,11 @@ class concordanceNavigatorElement extends HTMLElement {
         if (name === "enable-qr-code-scanner") {
             this.updateScanContainerVisibility();
         }
+        if (name === "current-connection") {
+            if (newValue && this.concordanceSelectorContainer && this.concordances.length > 0) {
+                this.navigateToConnectionById(newValue);
+            }
+        }
 
     }
 
@@ -1139,11 +1145,99 @@ class concordanceNavigatorElement extends HTMLElement {
             ? previousSelection
             : (this.concordances[0]?.name || null);
 
+        const currentConnection = this.getAttribute("current-connection");
+        const shouldSelectCurrentConnection = !!currentConnection;
+        const previousSuppressFlag = this._suppressShowConnection;
+
+        if (shouldSelectCurrentConnection) {
+            this._suppressShowConnection = true;
+        }
+
         this.buildConcordanceSelector(desiredSelection);
 
         if (this.concordances.length > 0) {
             this.switchConcordance(this.concordanceSelector.value);
         }
+
+        this._suppressShowConnection = previousSuppressFlag;
+
+        if (shouldSelectCurrentConnection) {
+            this.navigateToConnectionById(currentConnection);
+        }
+    }
+
+    findConnectionById = (connectionId) => {
+        if (!connectionId || !Array.isArray(this.concordances) || this.concordances.length === 0) {
+            return null;
+        }
+
+        const normalizedConnectionId = String(connectionId);
+
+        for (const concordance of this.concordances) {
+            const directConnections = concordance?.connections?.connections;
+            if (Array.isArray(directConnections)) {
+                const connectionIndex = directConnections.findIndex((connection) => String(connection?.id) === normalizedConnectionId);
+                if (connectionIndex !== -1) {
+                    return {
+                        concordanceName: concordance.name,
+                        groupName: null,
+                        connectionIndex
+                    };
+                }
+            }
+
+            const groups = concordance?.groups?.groups;
+            if (!Array.isArray(groups)) continue;
+
+            for (const group of groups) {
+                const groupConnections = group?.connections?.connections;
+                if (!Array.isArray(groupConnections)) continue;
+
+                const connectionIndex = groupConnections.findIndex((connection) => String(connection?.id) === normalizedConnectionId);
+                if (connectionIndex !== -1) {
+                    return {
+                        concordanceName: concordance.name,
+                        groupName: group.name,
+                        connectionIndex
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    navigateToConnectionById = (connectionId) => {
+        const resolved = this.findConnectionById(connectionId);
+        if (!resolved) {
+            console.warn("Connection ID not found:", connectionId);
+            return false;
+        }
+
+        const previousSuppressFlag = this._suppressShowConnection;
+        this._suppressShowConnection = true;
+
+        this.switchConcordance(resolved.concordanceName);
+        if (this.concordanceSelector) {
+            this.concordanceSelector.value = resolved.concordanceName;
+        }
+
+        if (resolved.groupName !== null) {
+            this.switchGroup(resolved.groupName);
+            if (this.groupSelector) {
+                this.groupSelector.value = resolved.groupName;
+            }
+        }
+
+        this._suppressShowConnection = previousSuppressFlag;
+
+        const indexWasUpdated = this.updateIndex(resolved.connectionIndex);
+        if (!indexWasUpdated) {
+            return false;
+        }
+
+        this.showConnection();
+        return true;
     }
 
     switchConcordance = (concordanceName) => {
@@ -1191,7 +1285,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this.showConnection();
         }
 
-        if (isDisabledConcordance) {
+        if (isDisabledConcordance && !this._suppressShowConnection) {
             const disabledEvent = new CustomEvent('concordance-navigator-disabled', {
                 bubbles: true
             });
@@ -1414,6 +1508,8 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     showConnection = () => {
+        if (this._suppressShowConnection) return;
+        if (!this.data || this.data.length === 0 || !this.data[this.index]) return;
         console.log("showing", this.index);
         // Send showConnection event to host
         const showConnectionRequest = new CustomEvent('show-connection-request', {
