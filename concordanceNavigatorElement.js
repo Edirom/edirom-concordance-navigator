@@ -342,7 +342,7 @@ const templates = {
             <div id="connections-container"></div>
         </div>
         <div id="collapse-expand-container">
-            <edirom-icon name="swipe_up" size="1.5rem"></edirom-icon>
+            <edirom-icon name="keyboard_arrow_up" size="2rem"></edirom-icon>
         </div>
     </div>
 `
@@ -846,7 +846,7 @@ class concordanceNavigatorElement extends HTMLElement {
         }
 
         if (this.collapseExpandIcon) {
-            this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "swipe_up" : "swipe_down");
+            this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "keyboard_arrow_up" : "keyboard_arrow_down");
         }
     }
 
