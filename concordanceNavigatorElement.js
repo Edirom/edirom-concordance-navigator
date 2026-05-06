@@ -703,6 +703,9 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.connectionsContainer.appendChild(buttonsContainer);
 
+        // Set initial button visibility based on index position.
+        this.updateNavigationButtonsVisibility();
+
         // Ensure slider visibility matches current collapse state on mobile.
         this.updateCollapsibleControlsVisibility();
     }
@@ -897,6 +900,15 @@ class concordanceNavigatorElement extends HTMLElement {
         }
 
         this.updateCollapsibleControlsVisibility();
+    }
+
+    updateNavigationButtonsVisibility = () => {
+        if (this.prevConnectionButton) {
+            this.prevConnectionButton.style.visibility = this.index <= 0 ? "hidden" : "visible";
+        }
+        if (this.nextConnectionButton) {
+            this.nextConnectionButton.style.visibility = this.index >= this.maxIndex ? "hidden" : "visible";
+        }
     }
 
     updateCollapsibleControlsVisibility = () => {
@@ -1587,6 +1599,8 @@ class concordanceNavigatorElement extends HTMLElement {
                 this._updateInputWidth();
             }
         }
+
+        this.updateNavigationButtonsVisibility();
 
         if (updateTime && this.timelineBasis) {
             var basisMeasure = this.timelineBasis.measures.find(measure => measure.measureLabel === this.getEnhancedValue());
