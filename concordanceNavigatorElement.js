@@ -833,6 +833,14 @@ class concordanceNavigatorElement extends HTMLElement {
         if (shouldCollapse === this.isCollapsed) return;
         this.isCollapsed = shouldCollapse;
 
+        if (shouldCollapse) {
+            this.setAttribute("collapsed", "");
+            this.removeAttribute("expanded");
+        } else {
+            this.setAttribute("expanded", "");
+            this.removeAttribute("collapsed");
+        }
+
         if (this.mode === "mobile") {
             this.applyCollapsedState();
         }
@@ -865,7 +873,13 @@ class concordanceNavigatorElement extends HTMLElement {
 
         if (this.collapseExpandContainer) {
             const visibleContainersCount = mainContainers.filter(c => c.children.length > 0).length;
-            this.collapseExpandContainer.style.visibility = visibleContainersCount <= 1 ? "hidden" : "visible";
+            const isCollapsible = visibleContainersCount > 1;
+            this.collapseExpandContainer.style.visibility = isCollapsible ? "visible" : "hidden";
+            if (isCollapsible) {
+                this.setAttribute("collapsible", "");
+            } else {
+                this.removeAttribute("collapsible");
+            }
         }
 
         if (this.isCollapsed) {
