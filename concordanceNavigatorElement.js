@@ -788,7 +788,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner", "current-connection"];
+        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner", "current-connection", "qr-regex"];
     }
 
     get concordancesData() {
@@ -1033,6 +1033,9 @@ class concordanceNavigatorElement extends HTMLElement {
 
         const scanner = document.createElement("edirom-qr-code-scanner");
         scanner.setAttribute("aspect-ratio", "1");
+        if (this.hasAttribute("qr-regex")) {
+            scanner.setAttribute("regex", this.getAttribute("qr-regex"));
+        }
         scanner.addEventListener("qr-code-scanned", (e) => {
             console.log("QR Code scanned:", e.detail.text);
             const paused = scanner.pauseScanner(true);
@@ -1041,6 +1044,11 @@ class concordanceNavigatorElement extends HTMLElement {
                     console.error("Failed to stop QR scanner after scan", err);
                 });
             }
+            this.dispatchEvent(new CustomEvent("load-links-request", {
+                detail: e.detail.text,
+                bubbles: true,
+                composed: true
+            }));
         });
 
         this._scannerContainer.appendChild(scanner);
@@ -1072,6 +1080,14 @@ class concordanceNavigatorElement extends HTMLElement {
         } catch (err) {
             console.error("Failed to stop scanner on inactivity", err);
         }
+    }
+
+    /**
+     * Closes the QR scanner popover if it is currently open.
+     * Safe to call when the popover does not exist or is already closed.
+     */
+    closeScannerPopover = () => {
+        this._scannerPopover?.hidePopover();
     }
 
     disconnectedCallback() {
@@ -1116,6 +1132,15 @@ class concordanceNavigatorElement extends HTMLElement {
         }
         if (name === "enable-qr-code-scanner") {
             this.updateScanContainerVisibility();
+        }
+        if (name === "qr-regex") {
+            if (this._qrScannerElement) {
+                if (newValue !== null) {
+                    this._qrScannerElement.setAttribute("regex", newValue);
+                } else {
+                    this._qrScannerElement.removeAttribute("regex");
+                }
+            }
         }
         if (name === "current-connection") {
             if (newValue && this.concordanceSelectorContainer && this.concordances.length > 0) {
