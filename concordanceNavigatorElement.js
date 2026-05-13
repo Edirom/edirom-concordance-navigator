@@ -134,7 +134,7 @@ const templates = {
             --nav-top-row-padding-top: 8px;
             --nav-top-row-padding-bottom: 0px;
             --nav-surface-outline: rgba(255, 255, 255, 0.1);
-            --nav-surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+            --nav-surface-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.3) inset;
         }
 
         input[type="range"] {
@@ -170,10 +170,11 @@ const templates = {
             padding-bottom: var(--nav-top-row-padding-bottom);
             padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
             background: var(--nav-top-bg);
+            box-shadow: rgba(0, 0, 0, 0.61) 0px -2px 4px 3px inset;
         }
 
         #top-row.animating {
-            transition: height 200ms ease-out, padding-top 200ms ease-out, padding-bottom 200ms ease-out;
+            transition: height 120ms ease-out, padding-top 120ms ease-out, padding-bottom 120ms ease-out;
         }
 
         #bottom-row {
@@ -202,6 +203,7 @@ const templates = {
             border-bottom: none;
             padding: 6px 8px 0;
             background: var(--nav-top-bg);
+            box-shadow: rgba(0, 0, 0, 0.61) 0px -2px 3px 2px inset;
         }
 
         #main-navigations {
