@@ -202,6 +202,7 @@ const templates = {
             border-radius: 12px 12px 0 0;
             border-bottom: none;
             padding: 6px 8px 0;
+            padding-bottom: 10px;
             background: var(--nav-top-bg);
             box-shadow: rgba(0, 0, 0, 0.61) 0px -2px 3px 2px inset;
         }
@@ -234,6 +235,15 @@ const templates = {
             justify-content: space-between;
             flex-direction: column;
             width: 100%;
+        }
+
+        #top-row #group-selector-container,
+        #top-row #concordance-selector-container {
+            margin: 5px 0 5px;
+        }
+
+        #top-row #connections-container {
+         margin-top: 5px;
         }
 
         #item-selector {
