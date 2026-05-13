@@ -169,8 +169,11 @@ const templates = {
             padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap));
             padding-bottom: var(--nav-top-row-padding-bottom);
             padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
-            transition: padding-top 200ms ease, padding-bottom 200ms ease;
             background: var(--nav-top-bg);
+        }
+
+        #top-row.animating {
+            transition: height 200ms ease-out, padding-top 200ms ease-out, padding-bottom 200ms ease-out;
         }
 
         #bottom-row {
@@ -1124,7 +1127,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this._cancelMobileHeightTransition();
             const targetHeight = this.getMobileTopRowTargetHeight();
             this._mobileCollapseTransitionActive = true;
-            this.topRow.style.transition = "height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease";
+            this.topRow.classList.add("animating");
             this.topRow.style.height = `${targetHeight}px`;
             this.topRow.style.paddingTop = "var(--nav-top-row-padding-top)";
             this.topRow.style.paddingBottom = "var(--nav-top-row-padding-bottom)";
@@ -1133,7 +1136,7 @@ class concordanceNavigatorElement extends HTMLElement {
                 this.topRow.removeEventListener("transitionend", onExpandEnd);
                 this._mobileHeightTransitionEnd = null;
                 this.topRow.style.height = "auto";
-                this.topRow.style.transition = "";
+                this.topRow.classList.remove("animating");
                 this._mobileCollapseTransitionActive = false;
             };
             this._mobileHeightTransitionEnd = onExpandEnd;
@@ -1148,7 +1151,8 @@ class concordanceNavigatorElement extends HTMLElement {
             this.topRow.style.height = `${currentHeight}px`;
             // Force a reflow to commit the pinned height before enabling the transition.
             void this.topRow.getBoundingClientRect();
-            this.topRow.style.transition = "height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease";
+            this.topRow.style.transition = "";
+            this.topRow.classList.add("animating");
             this.topRow.style.height = "0px";
             this.topRow.style.paddingTop = "0px";
             this.topRow.style.paddingBottom = "0px";
@@ -1156,7 +1160,7 @@ class concordanceNavigatorElement extends HTMLElement {
                 if (event.propertyName !== "height") return;
                 this.topRow.removeEventListener("transitionend", onCollapseEnd);
                 this._mobileHeightTransitionEnd = null;
-                this.topRow.style.transition = "";
+                this.topRow.classList.remove("animating");
                 this._mobileCollapseTransitionActive = false;
             };
             this._mobileHeightTransitionEnd = onCollapseEnd;
@@ -1181,6 +1185,8 @@ class concordanceNavigatorElement extends HTMLElement {
             this.topRow.removeEventListener("transitionend", this._mobileHeightTransitionEnd);
             this._mobileHeightTransitionEnd = null;
         }
+        this.topRow.classList.remove("animating");
+        this.topRow.style.transition = "";
         this._mobileCollapseTransitionActive = false;
     }
 
