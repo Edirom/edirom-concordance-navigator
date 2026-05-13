@@ -451,6 +451,9 @@ class concordanceNavigatorElement extends HTMLElement {
         this._suppressShowConnection = false;
         this._mobileLayoutResizeObserver = null;
         this._mobileHeightSyncFrame = null;
+        this._mobilePendingHeightSync = null;
+        this._mobileCollapseTransitionActive = false;
+        this._mobileTopRowShown = null;
         this.buttonsContainer = null;
     }
 
@@ -483,6 +486,14 @@ class concordanceNavigatorElement extends HTMLElement {
         if (this.mode === "mobile") {
             this._buildScannerPopover();
             this._setupMobileLayoutObserver();
+
+            if (this.topRow) {
+                this.topRow.addEventListener("transitionend", (event) => {
+                    if (event.propertyName === "height") {
+                        this._mobileCollapseTransitionActive = false;
+                    }
+                });
+            }
         }
     }
 
@@ -1041,6 +1052,9 @@ class concordanceNavigatorElement extends HTMLElement {
         }
 
         this._mobileLayoutResizeObserver = new ResizeObserver(() => {
+            if (this._mobileCollapseTransitionActive) {
+                return;
+            }
             this.scheduleMobileHeightSync({ animate: false });
         });
 
@@ -1054,13 +1068,19 @@ class concordanceNavigatorElement extends HTMLElement {
     scheduleMobileHeightSync = ({ animate = false } = {}) => {
         if (this.mode !== "mobile") return;
 
-        if (this._mobileHeightSyncFrame) {
-            cancelAnimationFrame(this._mobileHeightSyncFrame);
+        if (this._mobilePendingHeightSync) {
+            this._mobilePendingHeightSync.animate = this._mobilePendingHeightSync.animate || animate;
+        } else {
+            this._mobilePendingHeightSync = { animate };
         }
 
+        if (this._mobileHeightSyncFrame) return;
+
         this._mobileHeightSyncFrame = requestAnimationFrame(() => {
+            const pendingSync = this._mobilePendingHeightSync || { animate: false };
             this._mobileHeightSyncFrame = null;
-            this.syncMobileHeight({ animate });
+            this._mobilePendingHeightSync = null;
+            this.syncMobileHeight({ animate: pendingSync.animate });
         });
     }
 
@@ -1086,8 +1106,14 @@ class concordanceNavigatorElement extends HTMLElement {
         const topHeight = this.getMobileTopRowTargetHeight();
         const shouldShowTopRow = hasExpandableContent && (!isCollapsible || !this.isCollapsed);
         const targetTopHeight = shouldShowTopRow ? topHeight : 0;
+        const visibilityChanged = this._mobileTopRowShown !== null && this._mobileTopRowShown !== shouldShowTopRow;
+        const shouldAnimate = animate || visibilityChanged;
 
-        if (!animate) {
+        if (shouldAnimate) {
+            this._mobileCollapseTransitionActive = true;
+        }
+
+        if (!shouldAnimate) {
             this.topRow.style.transition = "none";
         }
 
@@ -1095,8 +1121,10 @@ class concordanceNavigatorElement extends HTMLElement {
         this.topRow.style.height = `${targetTopHeight}px`;
         this.topRow.style.paddingTop = shouldShowTopRow ? "var(--nav-top-row-padding-top)" : "0px";
         this.topRow.style.paddingBottom = shouldShowTopRow ? "var(--nav-top-row-padding-bottom)" : "0px";
+        this._mobileTopRowShown = shouldShowTopRow;
 
-        if (!animate) {
+        if (!shouldAnimate) {
+            this._mobileCollapseTransitionActive = false;
             requestAnimationFrame(() => {
                 if (this.isConnected) {
                     this.topRow.style.transition = "";
