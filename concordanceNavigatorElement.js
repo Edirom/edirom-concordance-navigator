@@ -169,7 +169,7 @@ const templates = {
             padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap));
             padding-bottom: var(--nav-top-row-padding-bottom);
             padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
-            transition: height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease;
+            transition: padding-top 200ms ease, padding-bottom 200ms ease;
             background: var(--nav-top-bg);
         }
 
@@ -454,6 +454,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this._mobilePendingHeightSync = null;
         this._mobileCollapseTransitionActive = false;
         this._mobileTopRowShown = null;
+        this._mobileHeightTransitionEnd = null;
         this.buttonsContainer = null;
     }
 
@@ -487,13 +488,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this._buildScannerPopover();
             this._setupMobileLayoutObserver();
 
-            if (this.topRow) {
-                this.topRow.addEventListener("transitionend", (event) => {
-                    if (event.propertyName === "height") {
-                        this._mobileCollapseTransitionActive = false;
-                    }
-                });
-            }
+
         }
     }
 
@@ -1103,34 +1098,90 @@ class concordanceNavigatorElement extends HTMLElement {
             this.removeAttribute("expanded");
         }
 
-        const topHeight = this.getMobileTopRowTargetHeight();
         const shouldShowTopRow = hasExpandableContent && (!isCollapsible || !this.isCollapsed);
-        const targetTopHeight = shouldShowTopRow ? topHeight : 0;
         const visibilityChanged = this._mobileTopRowShown !== null && this._mobileTopRowShown !== shouldShowTopRow;
         const shouldAnimate = animate || visibilityChanged;
 
-        if (shouldAnimate) {
-            this._mobileCollapseTransitionActive = true;
-        }
-
-        if (!shouldAnimate) {
-            this.topRow.style.transition = "none";
-        }
-
         this.style.height = "";
-        this.topRow.style.height = `${targetTopHeight}px`;
-        this.topRow.style.paddingTop = shouldShowTopRow ? "var(--nav-top-row-padding-top)" : "0px";
-        this.topRow.style.paddingBottom = shouldShowTopRow ? "var(--nav-top-row-padding-bottom)" : "0px";
         this._mobileTopRowShown = shouldShowTopRow;
 
-        if (!shouldAnimate) {
-            this._mobileCollapseTransitionActive = false;
+        if (shouldShowTopRow && !shouldAnimate) {
+            // Expanded, content changed while already visible — update instantly.
+            // height:auto lets the browser handle the new content size without any transition.
+            this._cancelMobileHeightTransition();
+            this.topRow.style.transition = "none";
+            this.topRow.style.height = "auto";
+            this.topRow.style.paddingTop = "var(--nav-top-row-padding-top)";
+            this.topRow.style.paddingBottom = "var(--nav-top-row-padding-bottom)";
+            requestAnimationFrame(() => {
+                if (this.isConnected) {
+                    this.topRow.style.transition = "";
+                }
+            });
+        } else if (shouldShowTopRow && shouldAnimate) {
+            // Expand animation: collapsed → expanded.
+            // Animate from 0px to the computed target height, then snap to auto.
+            this._cancelMobileHeightTransition();
+            const targetHeight = this.getMobileTopRowTargetHeight();
+            this._mobileCollapseTransitionActive = true;
+            this.topRow.style.transition = "height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease";
+            this.topRow.style.height = `${targetHeight}px`;
+            this.topRow.style.paddingTop = "var(--nav-top-row-padding-top)";
+            this.topRow.style.paddingBottom = "var(--nav-top-row-padding-bottom)";
+            const onExpandEnd = (event) => {
+                if (event.propertyName !== "height") return;
+                this.topRow.removeEventListener("transitionend", onExpandEnd);
+                this._mobileHeightTransitionEnd = null;
+                this.topRow.style.height = "auto";
+                this.topRow.style.transition = "";
+                this._mobileCollapseTransitionActive = false;
+            };
+            this._mobileHeightTransitionEnd = onExpandEnd;
+            this.topRow.addEventListener("transitionend", onExpandEnd);
+        } else if (!shouldShowTopRow && shouldAnimate) {
+            // Collapse animation: expanded → collapsed.
+            // Snapshot the current rendered height, pin it, then animate to 0.
+            this._cancelMobileHeightTransition();
+            const currentHeight = this.topRow.getBoundingClientRect().height;
+            this._mobileCollapseTransitionActive = true;
+            this.topRow.style.transition = "none";
+            this.topRow.style.height = `${currentHeight}px`;
+            // Force a reflow to commit the pinned height before enabling the transition.
+            void this.topRow.getBoundingClientRect();
+            this.topRow.style.transition = "height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease";
+            this.topRow.style.height = "0px";
+            this.topRow.style.paddingTop = "0px";
+            this.topRow.style.paddingBottom = "0px";
+            const onCollapseEnd = (event) => {
+                if (event.propertyName !== "height") return;
+                this.topRow.removeEventListener("transitionend", onCollapseEnd);
+                this._mobileHeightTransitionEnd = null;
+                this.topRow.style.transition = "";
+                this._mobileCollapseTransitionActive = false;
+            };
+            this._mobileHeightTransitionEnd = onCollapseEnd;
+            this.topRow.addEventListener("transitionend", onCollapseEnd);
+        } else {
+            // Instant collapse — no animation (e.g. initial state, fast hide).
+            this._cancelMobileHeightTransition();
+            this.topRow.style.transition = "none";
+            this.topRow.style.height = "0px";
+            this.topRow.style.paddingTop = "0px";
+            this.topRow.style.paddingBottom = "0px";
             requestAnimationFrame(() => {
                 if (this.isConnected) {
                     this.topRow.style.transition = "";
                 }
             });
         }
+    }
+
+    _cancelMobileHeightTransition = () => {
+        if (this._mobileHeightTransitionEnd) {
+            this.topRow.removeEventListener("transitionend", this._mobileHeightTransitionEnd);
+            this._mobileHeightTransitionEnd = null;
+        }
+        this._mobileCollapseTransitionActive = false;
     }
 
     _buildScannerPopover = () => {
