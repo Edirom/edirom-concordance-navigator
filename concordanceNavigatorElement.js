@@ -113,52 +113,113 @@ const templates = {
     mobile: `
     <style>
         :host {
+            display: block;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: visible;
             overscroll-behavior: contain; /* Prevent pull-to-refresh on supported browsers */
             touch-action: pan-x pan-y; /* Allow native gestures; vertical is handled via JS for collapse */
-            --nav-bg: #1f2333;
+            --nav-bg: var(--concordance-navigator-background, #1f2333);
+            --nav-top-bg: color-mix(in srgb, var(--nav-bg) 78%, white);
             --nav-contrast: #e4d9a5;
             --nav-contrast-strong: #cdbf86;
             --nav-surface: #f6f6f3;
             --nav-surface-border: #d8d0a4;
+            --nav-side-control-width: 2.75rem;
+            --nav-row-gap: 0.75rem;
+            --nav-control-column-max-width: 500px;
+            --nav-top-row-padding-top: 8px;
+            --nav-top-row-padding-bottom: 0px;
+            --nav-surface-outline: rgba(255, 255, 255, 0.1);
+            --nav-surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
         }
 
         input[type="range"] {
             touch-action: pan-x; /* Keep sliders draggable while blocking vertical pull-to-refresh */
             height: 2px;
-            margin-bottom: 10px;
-            margin-top: 10px;
+            margin: 10px 0 12px;
         }
 
         #concordance-navigator-container {
-            display: grid;
-            grid-template-columns: 10% 1fr 10%;
-            align-items: center;
+            display: flex;
+            flex-direction: column;
+            position: relative;
             width: 100%;
-            column-gap: 20px;
             box-sizing: border-box;
         }
 
-        #main-controls-container {
+        #top-row,
+        #bottom-row {
+            display: flex;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #top-row {
+            position: relative;
+            z-index: 1;
+            justify-content: center;
+            overflow: hidden;
+            height: auto;
+            margin-bottom: calc(-1 * var(--nav-row-overlap));
+            padding-top: var(--nav-top-row-padding-top);
+            padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap));
+            padding-bottom: var(--nav-top-row-padding-bottom);
+            padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
+            transition: height 200ms ease, padding-top 200ms ease, padding-bottom 200ms ease;
+            background: var(--nav-top-bg);
+        }
+
+        #bottom-row {
+            position: relative;
+            z-index: 2;
+            align-items: center;
+            gap: var(--nav-row-gap);
+            background: var(--nav-bg);
+            min-height: 50px;
+        }
+
+        #additional-navigations,
+        #main-navigations {
+            width: min(100%, var(--nav-control-column-max-width));
+            max-width: var(--nav-control-column-max-width);
+            min-width: 0;
+            box-sizing: border-box;
+            border: 1px solid var(--nav-surface-outline);
+            box-shadow: var(--nav-surface-shadow);
+        }
+
+        #additional-navigations {
             display: flex;
             flex-direction: column;
-            justify-self: center;
-            width: min(100%, 500px);
-            max-width: 500px;
-            min-width: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
-            border-radius: 10px;
-            padding: 3px 8px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px 12px 0 0;
+            border-bottom: none;
+            padding: 6px 8px 0;
+            background: var(--nav-top-bg);
+        }
+
+        #main-navigations {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            margin-inline: auto;
+            border-radius: 0 0 12px 12px;
+            border-top: none;
+            padding: 4px 8px 4px;
+            background: var(--nav-bg);
         }
 
         #collapse-expand-container, #scan-container {
-            height: 100%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 0;
-            flex-shrink: 0;
+            align-self: stretch;
+            flex: 0 0 var(--nav-side-control-width);
+            width: var(--nav-side-control-width);
             user-select: none;
             -webkit-user-select: none;
         }
@@ -167,6 +228,7 @@ const templates = {
             display: flex;
             justify-content: space-between;
             flex-direction: column;
+            width: 100%;
         }
 
         #item-selector {
@@ -261,13 +323,15 @@ const templates = {
             justify-content: space-between;
             flex-direction: row;
             align-items: center;
+            gap: 6px;
+            width: 100%;
         }
 
         #prev-connection-button, #next-connection-button {
             height: 35px;
             width: 35px;
             padding: 0;
-            flex-shrink: 0;
+            flex: 0 0 35px;
             box-sizing: border-box;
             background: var(--nav-bg);
             border: 1px solid var(--nav-contrast-strong);
@@ -321,7 +385,7 @@ const templates = {
         }
 
         button {
-            margin: 3px;
+            margin: 0;
             color: var(--nav-contrast);
         }
         input[type="range"], button, select {
@@ -333,16 +397,21 @@ const templates = {
         }
     </style>
     <div id="concordance-navigator-container">
-        <div id="scan-container">
-            <edirom-icon name="qr_code_scanner" size="2.0rem"></edirom-icon>
+        <div id="top-row">
+            <div id="additional-navigations">
+                <div id="concordance-selector-container"></div>
+                <div id="group-selector-container"></div>
+                <div id="connections-container"></div>
+            </div>
         </div>
-        <div id="main-controls-container">
-            <div id="concordance-selector-container"></div>
-            <div id="group-selector-container"></div>
-            <div id="connections-container"></div>
-        </div>
-        <div id="collapse-expand-container">
-            <edirom-icon name="keyboard_arrow_up" size="2rem"></edirom-icon>
+        <div id="bottom-row">
+            <div id="scan-container">
+                <edirom-icon name="qr_code_scanner" size="2.0rem"></edirom-icon>
+            </div>
+            <div id="main-navigations"></div>
+            <div id="collapse-expand-container">
+                <edirom-icon name="keyboard_arrow_up" size="2rem"></edirom-icon>
+            </div>
         </div>
     </div>
 `
@@ -380,6 +449,9 @@ class concordanceNavigatorElement extends HTMLElement {
         this._documentVisibilityHandler = null;
         this._pageHideHandler = null;
         this._suppressShowConnection = false;
+        this._mobileLayoutResizeObserver = null;
+        this._mobileHeightSyncFrame = null;
+        this.buttonsContainer = null;
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -393,6 +465,11 @@ class concordanceNavigatorElement extends HTMLElement {
 
     setupElements = () => {
         // Container elements
+        this.navigatorContainer = this.shadow.querySelector("#concordance-navigator-container");
+        this.topRow = this.shadow.querySelector("#top-row");
+        this.bottomRow = this.shadow.querySelector("#bottom-row");
+        this.additionalNavigations = this.shadow.querySelector("#additional-navigations");
+        this.mainNavigations = this.shadow.querySelector("#main-navigations");
         this.concordanceSelectorContainer = this.shadow.querySelector("#concordance-selector-container");
         this.groupSelectorContainer = this.shadow.querySelector("#group-selector-container");
         this.connectionsContainer = this.shadow.querySelector("#connections-container");
@@ -405,6 +482,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
         if (this.mode === "mobile") {
             this._buildScannerPopover();
+            this._setupMobileLayoutObserver();
         }
     }
 
@@ -444,8 +522,8 @@ class concordanceNavigatorElement extends HTMLElement {
                 this.swipeStartY = null;
             }, { passive: false });
 
-            // Default to collapsed on mobile so only marked elements remain visible.
-            this.setCollapseState(true);
+            // Default to collapsed on mobile so the component initially reveals only the bottom row.
+            this.setCollapseState(true, { animate: false, fireLayoutChange: false });
 
             this.scanContainer.addEventListener("click", () => {
                 this._scannerPopover.showPopover();
@@ -497,6 +575,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.concordanceSelectorContainer.appendChild(select);
         this.concordanceSelector = select;
+        this.syncMobileNavigationPlacement();
     }
 
     buildGroupSelector = (groups, label) => {
@@ -532,13 +611,20 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.groupSelectorContainer.appendChild(select);
         this.groupSelector = select;
+        this.syncMobileNavigationPlacement();
     }
 
     buildConnectionsUI = (connections, label) => {
         this.connectionsContainer.innerHTML = "";
+        if (this.mode === "mobile" && this.mainNavigations) {
+            this.mainNavigations.innerHTML = "";
+        }
 
         if (!connections || connections.length === 0) {
             this.clearData();
+            this.buttonsContainer = null;
+            this.syncMobileNavigationPlacement();
+            this.scheduleMobileHeightSync({ animate: false });
             return;
         }
 
@@ -579,6 +665,7 @@ class concordanceNavigatorElement extends HTMLElement {
         // Build buttons container
         const buttonsContainer = document.createElement("div");
         buttonsContainer.id = "buttons-container";
+        this.buttonsContainer = buttonsContainer;
 
         // Previous button
         const prevButton = document.createElement("button");
@@ -701,13 +788,18 @@ class concordanceNavigatorElement extends HTMLElement {
         buttonsContainer.appendChild(nextButton);
         this.nextConnectionButton = nextButton;
 
-        this.connectionsContainer.appendChild(buttonsContainer);
+        if (this.mode !== "mobile") {
+            this.connectionsContainer.appendChild(buttonsContainer);
+        }
+
+        this.syncMobileNavigationPlacement();
 
         // Set initial button visibility based on index position.
         this.updateNavigationButtonsVisibility();
 
-        // Ensure slider visibility matches current collapse state on mobile.
+        // Reserved for future collapse-managed sub-elements.
         this.updateCollapsibleControlsVisibility();
+        this.scheduleMobileHeightSync({ animate: false });
     }
 
     buildTimelineUI = () => {
@@ -809,30 +901,12 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setupElements();
         this.setupEventListeners();
         this.setConcordances();
+        if (this.mode === "mobile") {
+            this.scheduleMobileHeightSync({ animate: false });
+        }
     }
 
-    /**
-     * Determines which container should be visible when collapsed.
-     * Priority: connections > groups > concordances
-     * Returns the container element that should remain visible.
-     */
-    getLowestVisibleContainer = () => {
-        // Check if connections container has content
-        if (this.connectionsContainer && this.connectionsContainer.children.length > 0) {
-            return this.connectionsContainer;
-        }
-        // Check if group selector container has content
-        if (this.groupSelectorContainer && this.groupSelectorContainer.children.length > 0) {
-            return this.groupSelectorContainer;
-        }
-        // Fall back to concordance selector container
-        if (this.concordanceSelectorContainer && this.concordanceSelectorContainer.children.length > 0) {
-            return this.concordanceSelectorContainer;
-        }
-        return null;
-    }
-
-    setCollapseState = (shouldCollapse) => {
+    setCollapseState = (shouldCollapse, { animate = true, fireLayoutChange = true } = {}) => {
         if (shouldCollapse === this.isCollapsed) return;
         this.isCollapsed = shouldCollapse;
 
@@ -844,12 +918,12 @@ class concordanceNavigatorElement extends HTMLElement {
             this.removeAttribute("collapsed");
         }
 
-        if (this.mode === "mobile") {
-            this.applyCollapsedState();
-        }
-
         if (this.collapseExpandIcon) {
             this.collapseExpandIcon.setAttribute("name", shouldCollapse ? "keyboard_arrow_up" : "keyboard_arrow_down");
+        }
+
+        if (this.mode === "mobile") {
+            this.applyCollapsedState({ animate, fireLayoutChange });
         }
     }
 
@@ -865,41 +939,15 @@ class concordanceNavigatorElement extends HTMLElement {
         this.setCollapseState(false);
     }
 
-    applyCollapsedState = () => {
+    applyCollapsedState = ({ animate = true, fireLayoutChange = true } = {}) => {
         if (this.mode !== "mobile") return;
 
-        const mainContainers = [
-            this.concordanceSelectorContainer,
-            this.groupSelectorContainer,
-            this.connectionsContainer
-        ].filter(c => c != null);
-
-        if (this.collapseExpandContainer) {
-            const visibleContainersCount = mainContainers.filter(c => c.children.length > 0).length;
-            const isCollapsible = visibleContainersCount > 1;
-            this.collapseExpandContainer.style.visibility = isCollapsible ? "visible" : "hidden";
-            if (isCollapsible) {
-                this.setAttribute("collapsible", "");
-            } else {
-                this.removeAttribute("collapsible");
-            }
-        }
-
-        if (this.isCollapsed) {
-            // When collapsed, only show the lowest level container with content
-            const lowestVisible = this.getLowestVisibleContainer();
-
-            for (const container of mainContainers) {
-                container.classList.toggle("hidden", container !== lowestVisible);
-            }
-        } else {
-            // When expanded, show all containers
-            for (const container of mainContainers) {
-                container.classList.remove("hidden");
-            }
-        }
-
         this.updateCollapsibleControlsVisibility();
+        this.scheduleMobileHeightSync({ animate });
+
+        if (fireLayoutChange) {
+            this.fireLayoutChangeEvent();
+        }
     }
 
     updateNavigationButtonsVisibility = () => {
@@ -912,9 +960,12 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     updateCollapsibleControlsVisibility = () => {
-        // Only hide the slider on mobile when collapsed; keep build logic unchanged.
-        if (this.mode !== "mobile" || !this.itemSlider) return;
-        this.itemSlider.classList.toggle("hidden", this.isCollapsed);
+        if (this.mode !== "mobile") return;
+
+        const collapseManagedElements = this.shadow.querySelectorAll("[data-collapse-visibility='hidden']");
+        for (const element of collapseManagedElements) {
+            element.classList.toggle("hidden", this.isCollapsed);
+        }
     }
 
     updateScanContainerVisibility = () => {
@@ -923,6 +974,135 @@ class concordanceNavigatorElement extends HTMLElement {
         this.scanContainer.style.visibility = enabled ? "visible" : "hidden";
         this.scanContainer.style.pointerEvents = enabled ? "auto" : "none";
         this.scanContainer.setAttribute("aria-hidden", enabled ? "false" : "true");
+    }
+
+    getMobileVisibleContainers = () => {
+        return [
+            this.concordanceSelectorContainer,
+            this.groupSelectorContainer,
+            this.connectionsContainer
+        ].filter((container) => container && container.children.length > 0);
+    }
+
+    syncMobileNavigationPlacement = () => {
+        if (this.mode !== "mobile" || !this.additionalNavigations || !this.mainNavigations) return;
+
+        const visibleContainers = this.getMobileVisibleContainers();
+        const hasConnections = !!this.connectionsContainer && this.connectionsContainer.children.length > 0;
+
+        this.additionalNavigations.innerHTML = "";
+        this.mainNavigations.innerHTML = "";
+
+        if (hasConnections) {
+            visibleContainers.forEach((container) => {
+                this.additionalNavigations.appendChild(container);
+            });
+
+            if (this.buttonsContainer) {
+                this.mainNavigations.appendChild(this.buttonsContainer);
+            }
+        } else {
+            visibleContainers.forEach((container) => {
+                this.mainNavigations.appendChild(container);
+            });
+        }
+    }
+
+    isDisabledConcordanceSelected = () => {
+        return !!this.injectDisabledConcordanceName && this.concordanceSelector?.value === this.injectDisabledConcordanceName;
+    }
+
+    hasExpandableMobileContent = () => {
+        return !!this.connectionsContainer && this.connectionsContainer.children.length > 0;
+    }
+
+    isMobileCollapsible = () => {
+        return this.hasExpandableMobileContent() && !this.isDisabledConcordanceSelected();
+    }
+
+    getMobileTopRowTargetHeight = () => {
+        if (!this.topRow || !this.additionalNavigations || !this.hasExpandableMobileContent()) {
+            return 0;
+        }
+
+        const styles = getComputedStyle(this);
+        const paddingTop = parseFloat(styles.getPropertyValue("--nav-top-row-padding-top")) || 0;
+        const paddingBottom = parseFloat(styles.getPropertyValue("--nav-top-row-padding-bottom")) || 0;
+        const additionalHeight = Math.ceil(this.additionalNavigations.scrollHeight);
+
+        return additionalHeight + paddingTop + paddingBottom;
+    }
+
+    _setupMobileLayoutObserver = () => {
+        if (this.mode !== "mobile" || typeof ResizeObserver === "undefined") return;
+
+        if (this._mobileLayoutResizeObserver) {
+            this._mobileLayoutResizeObserver.disconnect();
+        }
+
+        this._mobileLayoutResizeObserver = new ResizeObserver(() => {
+            this.scheduleMobileHeightSync({ animate: false });
+        });
+
+        [this.topRow, this.bottomRow, this.additionalNavigations, this.mainNavigations].forEach((element) => {
+            if (element) {
+                this._mobileLayoutResizeObserver.observe(element);
+            }
+        });
+    }
+
+    scheduleMobileHeightSync = ({ animate = false } = {}) => {
+        if (this.mode !== "mobile") return;
+
+        if (this._mobileHeightSyncFrame) {
+            cancelAnimationFrame(this._mobileHeightSyncFrame);
+        }
+
+        this._mobileHeightSyncFrame = requestAnimationFrame(() => {
+            this._mobileHeightSyncFrame = null;
+            this.syncMobileHeight({ animate });
+        });
+    }
+
+    syncMobileHeight = ({ animate = false } = {}) => {
+        if (this.mode !== "mobile" || !this.topRow || !this.bottomRow) return;
+
+        const hasExpandableContent = this.hasExpandableMobileContent();
+        const isCollapsible = this.isMobileCollapsible();
+        if (this.collapseExpandContainer) {
+            this.collapseExpandContainer.style.visibility = isCollapsible ? "visible" : "hidden";
+        }
+
+        if (isCollapsible) {
+            this.setAttribute("collapsible", "");
+            this.toggleAttribute("collapsed", this.isCollapsed);
+            this.toggleAttribute("expanded", !this.isCollapsed);
+        } else {
+            this.removeAttribute("collapsible");
+            this.removeAttribute("collapsed");
+            this.removeAttribute("expanded");
+        }
+
+        const topHeight = this.getMobileTopRowTargetHeight();
+        const shouldShowTopRow = hasExpandableContent && (!isCollapsible || !this.isCollapsed);
+        const targetTopHeight = shouldShowTopRow ? topHeight : 0;
+
+        if (!animate) {
+            this.topRow.style.transition = "none";
+        }
+
+        this.style.height = "";
+        this.topRow.style.height = `${targetTopHeight}px`;
+        this.topRow.style.paddingTop = shouldShowTopRow ? "var(--nav-top-row-padding-top)" : "0px";
+        this.topRow.style.paddingBottom = shouldShowTopRow ? "var(--nav-top-row-padding-bottom)" : "0px";
+
+        if (!animate) {
+            requestAnimationFrame(() => {
+                if (this.isConnected) {
+                    this.topRow.style.transition = "";
+                }
+            });
+        }
     }
 
     _buildScannerPopover = () => {
@@ -1119,6 +1299,16 @@ class concordanceNavigatorElement extends HTMLElement {
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
 
+        if (this._mobileHeightSyncFrame) {
+            cancelAnimationFrame(this._mobileHeightSyncFrame);
+            this._mobileHeightSyncFrame = null;
+        }
+
+        if (this._mobileLayoutResizeObserver) {
+            this._mobileLayoutResizeObserver.disconnect();
+            this._mobileLayoutResizeObserver = null;
+        }
+
         if (this._documentVisibilityHandler) {
             document.removeEventListener("visibilitychange", this._documentVisibilityHandler);
             this._documentVisibilityHandler = null;
@@ -1298,6 +1488,9 @@ class concordanceNavigatorElement extends HTMLElement {
             this.groupSelectorContainer.innerHTML = "";
             this.connectionsContainer.innerHTML = "";
             this.clearData();
+            this.buttonsContainer = null;
+            this.syncMobileNavigationPlacement();
+            this.scheduleMobileHeightSync({ animate: false });
             return;
         }
         const isDisabledConcordance = this.injectDisabledConcordanceName && concordanceName === this.injectDisabledConcordanceName;
@@ -1323,14 +1516,13 @@ class concordanceNavigatorElement extends HTMLElement {
                 console.log("No groups and no connections!");
                 this.connectionsContainer.innerHTML = "";
                 this.clearData();
+                this.buttonsContainer = null;
+                this.syncMobileNavigationPlacement();
             }
         }
 
-        // Always expand when concordance changes, then re-apply mobile state
+        // Always expand when concordance changes.
         this.setCollapseState(false);
-        if (this.mode === "mobile") {
-            this.applyCollapsedState();
-        }
 
         if (shouldFireShowConnection) {
             this.showConnection();
@@ -1358,13 +1550,13 @@ class concordanceNavigatorElement extends HTMLElement {
             console.log("Group has no connections!");
             this.connectionsContainer.innerHTML = "";
             this.clearData();
+            this.buttonsContainer = null;
+            this.syncMobileNavigationPlacement();
+            this.scheduleMobileHeightSync({ animate: false });
         }
 
-        // Always expand when group changes, then re-apply mobile state
+        // Always expand when group changes.
         this.setCollapseState(false);
-        if (this.mode === "mobile") {
-            this.applyCollapsedState();
-        }
 
         if (shouldFireShowConnection && this.data.length > 0) {
             this.showConnection();
