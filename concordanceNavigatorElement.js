@@ -149,6 +149,7 @@ const templates = {
             position: relative;
             width: 100%;
             box-sizing: border-box;
+            align-items: center;
         }
 
         #top-row,
@@ -164,13 +165,16 @@ const templates = {
             justify-content: center;
             overflow: hidden;
             height: auto;
+            width: 97%;
+            border-top-left-radius: 7px;
+            border-top-right-radius: 7px;
             margin-bottom: calc(-1 * var(--nav-row-overlap));
             padding-top: var(--nav-top-row-padding-top);
             padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap));
             padding-bottom: var(--nav-top-row-padding-bottom);
             padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
             background: var(--nav-top-bg);
-            box-shadow: rgba(0, 0, 0, 0.61) 0px -2px 4px 3px inset;
+            box-shadow: rgba(0, 0, 0, 0.61) 0px 0px 4px 3px inset, rgba(0, 0, 0, 0.61) 0px -1px 4px 3px;
         }
 
         #top-row.animating {
@@ -1119,6 +1123,10 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.style.height = "";
         this._mobileTopRowShown = shouldShowTopRow;
+
+        this.topRow.style.boxShadow = shouldShowTopRow
+            ? "rgba(0, 0, 0, 0.61) 0px 0px 4px 3px inset, rgba(0, 0, 0, 0.61) 0px -1px 4px 3px"
+            : "none";
 
         if (shouldShowTopRow && !shouldAnimate) {
             // Expanded, content changed while already visible — update instantly.
