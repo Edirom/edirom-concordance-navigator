@@ -170,9 +170,9 @@ const templates = {
             border-top-right-radius: 7px;
             margin-bottom: calc(-1 * var(--nav-row-overlap));
             padding-top: var(--nav-top-row-padding-top);
-            padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap));
+            padding-right: calc(var(--nav-side-control-width) + var(--nav-row-gap) - 1.5%);
             padding-bottom: var(--nav-top-row-padding-bottom);
-            padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap));
+            padding-left: calc(var(--nav-side-control-width) + var(--nav-row-gap) - 1.5%);
             background: var(--nav-top-bg);
             box-shadow: rgba(0, 0, 0, 0.61) 0px 0px 4px 3px inset, rgba(0, 0, 0, 0.61) 0px -1px 4px 3px;
         }
