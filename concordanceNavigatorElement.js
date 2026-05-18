@@ -286,7 +286,7 @@ const templates = {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--ewk-tertiary-color);
+            background: var(--tertiary-color);
             border: 1px solid var(--nav-surface-border);
             border-radius: 8px;
             box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -380,7 +380,7 @@ const templates = {
             height: 100%;
             width: 36px;
             border: 1px solid var(--nav-surface-border);
-            background: var(--ewk-secondary-color);
+            background: var(--secondary-color);
             margin: 0;
             font-size: 0.8em;
             border-radius: 0 8px 8px 0;
