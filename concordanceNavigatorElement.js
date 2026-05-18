@@ -929,6 +929,8 @@ class concordanceNavigatorElement extends HTMLElement {
         if (this.mode === "mobile") {
             this.scheduleMobileHeightSync({ animate: false });
         }
+        this.setAttribute('data-handles-back-request', '');
+        this.addEventListener('back-request', this._handleBackRequest);
     }
 
     setCollapseState = (shouldCollapse, { animate = true, fireLayoutChange = true } = {}) => {
@@ -1401,8 +1403,17 @@ class concordanceNavigatorElement extends HTMLElement {
         this._scannerPopover?.hidePopover();
     }
 
+    _handleBackRequest = (event) => {
+        if (this._scannerPopover?.matches(':popover-open')) {
+            event.preventDefault();
+            this.closeScannerPopover();
+            this._pauseOrStopScanner();
+        }
+    }
+
     disconnectedCallback() {
         console.log("Concordance Navigator disconnected!");
+        this.removeEventListener('back-request', this._handleBackRequest);
 
         if (this._mobileHeightSyncFrame) {
             cancelAnimationFrame(this._mobileHeightSyncFrame);
