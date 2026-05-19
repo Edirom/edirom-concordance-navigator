@@ -1213,10 +1213,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     _buildScannerPopover = () => {
-        // The popover is appended to document.body rather than the shadow root.
-        // This is required because the edirom-qr-code-scanner component uses
-        // document.getElementById() internally (via the html5-qrcode library),
-        // which cannot cross a Shadow Root boundary.
         const popover = document.createElement("div");
         popover.popover = "manual";
         // Do NOT set display here — the Popover API hides elements via display:none
@@ -1317,8 +1313,6 @@ class concordanceNavigatorElement extends HTMLElement {
         popover.appendChild(inner);
         inner.appendChild(topGroup);
         inner.appendChild(buttonRow);
-        document.body.appendChild(popover);
-        this._scannerPopover = popover;
 
         this._popoverToggleHandler = async (event) => {
             if (event.newState === "open") {
@@ -1337,6 +1331,9 @@ class concordanceNavigatorElement extends HTMLElement {
         };
 
         popover.addEventListener("toggle", this._popoverToggleHandler);
+
+        this.shadow.appendChild(popover);
+        this._scannerPopover = popover;
     }
 
     _ensureScannerElement = () => {
