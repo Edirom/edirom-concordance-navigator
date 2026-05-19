@@ -1245,13 +1245,13 @@ class concordanceNavigatorElement extends HTMLElement {
             #scanner-popover.closing {
                 transform: scale(0.04);
                 opacity: 0;
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.8, 0.3), opacity 0.3s ease-in 0.1s;
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.8, 0.3), opacity 0.2s ease-in 0.2s;
             }
 
             #scanner-popover.closing::backdrop {
                 backdrop-filter: blur(0px);
                 -webkit-backdrop-filter: blur(0px);
-                transition: backdrop-filter 0.35s ease-in;
+                transition: backdrop-filter 0.2s ease-in;
             }
 
             #scanner-popover::backdrop {
