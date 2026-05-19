@@ -551,7 +551,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this.setCollapseState(true, { animate: false, fireLayoutChange: false });
 
             this.scanContainer.addEventListener("click", () => {
-                this._scannerPopover.showPopover();
+                this._openScannerPopover();
             });
 
             if (!this._documentVisibilityHandler) {
@@ -1213,106 +1213,164 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     _buildScannerPopover = () => {
+        const style = document.createElement("style");
+        style.textContent = `
+            #scanner-popover {
+                position: fixed;
+                inset: 0;
+                margin: auto;
+                width: 95dvw;
+                height: 95dvh;
+                border: none;
+                padding: 0;
+                border-radius: 12px;
+                background: transparent;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+                overflow: hidden;
+                transform-origin: var(--popover-origin-x, 50%) var(--popover-origin-y, 50%);
+                transition: transform 0.75s cubic-bezier(0.22, 1.15, 0.36, 1), opacity 0.15s ease-out;
+            }
+
+            @starting-style {
+                #scanner-popover:popover-open {
+                    transform: scale(0.04);
+                }
+                #scanner-popover:popover-open::backdrop {
+                    backdrop-filter: blur(0px);
+                    -webkit-backdrop-filter: blur(0px);
+                }
+            }
+
+            #scanner-popover.closing {
+                transform: scale(0.04);
+                opacity: 0;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.8, 0.3), opacity 0.3s ease-in 0.1s;
+            }
+
+            #scanner-popover.closing::backdrop {
+                backdrop-filter: blur(0px);
+                -webkit-backdrop-filter: blur(0px);
+                transition: backdrop-filter 0.35s ease-in;
+            }
+
+            #scanner-popover::backdrop {
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                transition: backdrop-filter 0.75s ease;
+            }
+
+            #scanner-popover-inner {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                padding: 0;
+                box-sizing: border-box;
+                gap: 0;
+            }
+
+            #scanner-popover-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 20px;
+                background-color: var(--primary-color);
+                color: var(--secondary-color);
+                font-size: 1rem;
+                font-weight: 600;
+                flex-shrink: 0;
+            }
+
+            #scanner-popover-header edirom-icon {
+                width: 1.4rem;
+                height: 1.4rem;
+                flex-shrink: 0;
+            }
+
+            #scanner-content {
+                flex: 1;
+                overflow-y: auto;
+                background-color: var(--tertiary-color);
+                box-sizing: border-box;
+                -webkit-overflow-scrolling: touch;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            #scanner-bottom-row {
+                display: flex;
+                justify-content: flex-end;
+                flex-shrink: 0;
+                background: transparent;
+                padding: 12px 20px;
+            }
+
+            #scanner-close-button {
+                padding: 12px 28px;
+                font-size: 1rem;
+                cursor: pointer;
+                border: none;
+                border-radius: 8px;
+                background: var(--secondary-color);
+                color: var(--primary-color);
+                font-weight: bold;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            #scanner-close-button:active {
+                background: color-mix(in oklch, var(--secondary-color) 85%, black);
+            }
+        `;
+        this.shadow.appendChild(style);
+
         const popover = document.createElement("div");
+        popover.id = "scanner-popover";
         popover.popover = "manual";
-        // Do NOT set display here — the Popover API hides elements via display:none
-        // on the UA stylesheet. An explicit display inline style would override that,
-        // causing the popover to be permanently visible even when "hidden".
-        popover.style.cssText = [
-            "margin: 0",
-            "padding: 0",
-            "border: none",
-            "width: 100dvw",
-            "height: 100dvh",
-            "box-sizing: border-box",
-            "background: rgba(0, 0, 0, 0.85)",
-        ].join(";");
 
-        // Inner wrapper carries the flex layout so it never interferes with the
-        // browser's display:none that the Popover API uses to hide the popover.
         const inner = document.createElement("div");
-        inner.style.cssText = [
-            "display: flex",
-            "flex-direction: column",
-            "align-items: center",
-            "justify-content: space-between",
-            "width: 100%",
-            "height: 100%",
-            "padding: 24px",
-            "box-sizing: border-box",
-        ].join(";");
+        inner.id = "scanner-popover-inner";
 
-        // Top group: instruction text + camera feed, stacked vertically and
-        // centred horizontally. flex-grow: 1 lets it fill the available space
-        // above the button row.
-        const topGroup = document.createElement("div");
-        topGroup.style.cssText = [
-            "display: flex",
-            "flex-direction: column",
-            "align-items: center",
-            "flex-grow: 1",
-            "width: 100%",
-        ].join(";");
+        const header = document.createElement("div");
+        header.id = "scanner-popover-header";
+        const headerIcon = document.createElement("edirom-icon");
+        headerIcon.setAttribute("name", "qr_code_scanner");
+        headerIcon.setAttribute("size", "fill");
+        const headerTitle = document.createElement("span");
+        headerTitle.textContent = "QR-Code scannen";
+        header.appendChild(headerIcon);
+        header.appendChild(headerTitle);
 
-        const scannerInstruction = document.createElement("p");
-        scannerInstruction.textContent = "Bandkontext wechseln durch QR-Code";
-        scannerInstruction.style.cssText = [
-            "color: #e4d9a5",
-            "font-size: 1rem",
-            "text-align: center",
-            "margin: 16px 0 5px 0px",
-            "padding: 0 16px",
-            "flex-shrink: 0",
-        ].join(";");
+        const content = document.createElement("div");
+        content.id = "scanner-content";
 
         const scannerContainer = document.createElement("div");
         scannerContainer.style.cssText = [
             "width: 100%",
-            "border-radius: 12px",
             "overflow: hidden",
             "flex-shrink: 1",
         ].join(";");
         this._scannerContainer = scannerContainer;
 
+        content.appendChild(scannerContainer);
 
-        topGroup.appendChild(scannerContainer);
-        topGroup.appendChild(scannerInstruction);
-
-        // Button row — sits at the bottom, right-aligned so buttons are
-        // reachable by the thumb. Add further buttons here in the future.
-        const buttonRow = document.createElement("div");
-        buttonRow.style.cssText = [
-            "display: flex",
-            "flex-direction: row",
-            "justify-content: flex-end",
-            "align-items: center",
-            "width: 100%",
-            "gap: 12px",
-            "flex-shrink: 0",
-        ].join(";");
+        const bottomRow = document.createElement("div");
+        bottomRow.id = "scanner-bottom-row";
 
         const closeButton = document.createElement("button");
+        closeButton.id = "scanner-close-button";
         closeButton.textContent = "Schließen";
         closeButton.setAttribute("aria-label", "QR-Code-Scanner schließen");
-        closeButton.style.cssText = [
-            "padding: 12px 28px",
-            "font-size: 1rem",
-            "cursor: pointer",
-            "border: none",
-            "border-radius: 8px",
-            "background: #e4d9a5",
-            "color: #1f2333",
-            "font-weight: bold",
-        ].join(";");
         closeButton.addEventListener("click", () => {
-            popover.hidePopover();
+            this._closeScannerPopoverAnimated();
         });
 
-        buttonRow.appendChild(closeButton);
+        bottomRow.appendChild(closeButton);
 
+        inner.appendChild(header);
+        inner.appendChild(content);
+        inner.appendChild(bottomRow);
         popover.appendChild(inner);
-        inner.appendChild(topGroup);
-        inner.appendChild(buttonRow);
 
         this._popoverToggleHandler = async (event) => {
             if (event.newState === "open") {
@@ -1334,6 +1392,30 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.shadow.appendChild(popover);
         this._scannerPopover = popover;
+    }
+
+    _openScannerPopover = () => {
+        const btnRect = this.scanContainer.getBoundingClientRect();
+        const btnCenterX = btnRect.left + btnRect.width / 2;
+        const btnCenterY = btnRect.top + btnRect.height / 2;
+        const popoverLeft = window.innerWidth * 0.025;
+        const popoverTop = window.innerHeight * 0.025;
+        this._scannerPopover.style.setProperty('--popover-origin-x', `${btnCenterX - popoverLeft}px`);
+        this._scannerPopover.style.setProperty('--popover-origin-y', `${btnCenterY - popoverTop}px`);
+        this._scannerPopover.showPopover();
+    }
+
+    _closeScannerPopoverAnimated = () => {
+        if (!this._scannerPopover?.matches(':popover-open')) return;
+        this._scannerPopover.classList.add('closing');
+        const handler = (event) => {
+            if (event.propertyName === 'transform') {
+                this._scannerPopover.removeEventListener('transitionend', handler);
+                this._scannerPopover.classList.remove('closing');
+                this._scannerPopover.hidePopover();
+            }
+        };
+        this._scannerPopover.addEventListener('transitionend', handler);
     }
 
     _ensureScannerElement = () => {
@@ -1397,13 +1479,13 @@ class concordanceNavigatorElement extends HTMLElement {
      * Safe to call when the popover does not exist or is already closed.
      */
     closeScannerPopover = () => {
-        this._scannerPopover?.hidePopover();
+        this._closeScannerPopoverAnimated();
     }
 
     _handleBackRequest = (event) => {
         if (this._scannerPopover?.matches(':popover-open')) {
             event.preventDefault();
-            this.closeScannerPopover();
+            this._closeScannerPopoverAnimated();
             this._pauseOrStopScanner();
         }
     }
