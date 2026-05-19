@@ -464,6 +464,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this._scannerPopover = null;
         this._scannerContainer = null;
         this._qrScannerElement = null;
+        this._scannerPlaceholder = null;
         this._popoverToggleHandler = null;
         this._documentVisibilityHandler = null;
         this._pageHideHandler = null;
@@ -1321,6 +1322,18 @@ class concordanceNavigatorElement extends HTMLElement {
             #scanner-close-button:active {
                 background: color-mix(in oklch, var(--secondary-color) 85%, black);
             }
+
+            #scanner-loading-placeholder {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--primary-color);
+                font-size: 1.2rem;
+                pointer-events: none;
+                border-radius: inherit;
+            }
         `;
         this.shadow.appendChild(style);
 
@@ -1348,9 +1361,17 @@ class concordanceNavigatorElement extends HTMLElement {
         scannerContainer.style.cssText = [
             "width: 100%",
             "overflow: hidden",
-            "flex-shrink: 1",
+            "flex: 1 1 0",
+            "min-height: 0",
+            "position: relative",
         ].join(";");
         this._scannerContainer = scannerContainer;
+
+        const loadingPlaceholder = document.createElement("div");
+        loadingPlaceholder.id = "scanner-loading-placeholder";
+        loadingPlaceholder.textContent = "Scanner wird gestartet\u2026";
+        scannerContainer.appendChild(loadingPlaceholder);
+        this._scannerPlaceholder = loadingPlaceholder;
 
         content.appendChild(scannerContainer);
 
@@ -1374,13 +1395,18 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this._popoverToggleHandler = async (event) => {
             if (event.newState === "open") {
+                this._showScannerPlaceholder();
                 const scanner = this._ensureScannerElement();
                 const resumed = scanner.resumeScanner();
-                if (!resumed) {
+                if (resumed) {
+                    this._hideScannerPlaceholder();
+                } else {
                     try {
                         await scanner.startScanner();
+                        this._hideScannerPlaceholder();
                     } catch (err) {
                         console.error("Failed to start QR scanner", err);
+                        // Leave placeholder visible — camera did not start.
                     }
                 }
             } else {
@@ -1392,6 +1418,18 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this.shadow.appendChild(popover);
         this._scannerPopover = popover;
+    }
+
+    _showScannerPlaceholder = () => {
+        if (this._scannerPlaceholder) {
+            this._scannerPlaceholder.style.display = "";
+        }
+    }
+
+    _hideScannerPlaceholder = () => {
+        if (this._scannerPlaceholder) {
+            this._scannerPlaceholder.style.display = "none";
+        }
     }
 
     _openScannerPopover = () => {
@@ -1457,8 +1495,21 @@ class concordanceNavigatorElement extends HTMLElement {
                 await this._qrScannerElement.stopScanner();
             } catch (err) {
                 console.error("Failed to stop QR scanner", err);
+                // stopScanner() already called _forceReset() internally.
+                // Remove the broken element from the DOM so _ensureScannerElement()
+                // will create a fresh one on the next open.
+                try {
+                    this._qrScannerElement.remove();
+                } catch (_) {
+                    // Best-effort removal.
+                }
+                this._qrScannerElement = null;
             }
         }
+
+        // Re-show the placeholder so the next open shows it while the camera
+        // initialises (whether this was a clean pause or a forced reset).
+        this._showScannerPlaceholder();
     }
 
     _releaseScannerForInactivity = async () => {
