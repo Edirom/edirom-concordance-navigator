@@ -2006,6 +2006,13 @@ class concordanceNavigatorElement extends HTMLElement {
             bubbles: true
         });
         this.dispatchEvent(showConnectionRequest);
+        // Notify host about the current connection ID (may be null if connection has no id)
+        const connectionChangedEvent = new CustomEvent('connection-changed', {
+            detail: { connectionId: this.data[this.index]?.id ?? null },
+            bubbles: true,
+            composed: true
+        });
+        this.dispatchEvent(connectionChangedEvent);
     }
 
     showPrevConnection = () => {
