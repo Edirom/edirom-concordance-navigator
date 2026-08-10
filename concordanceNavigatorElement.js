@@ -870,7 +870,6 @@ class concordanceNavigatorElement extends HTMLElement {
         });
         currentTimeInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
-                console.log("Time changed with key press.");
                 let newTime = this.hhmmssToSeconds(currentTimeInput.value);
                 if (newTime === false) {
                     newTime = this.currentTime;
@@ -1582,7 +1581,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        console.log(name, oldValue, newValue);
         if (oldValue === newValue) return;
         if (name === "concordances-data") {
             this.rawConcordances = JSON.parse(newValue);
@@ -1728,7 +1726,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     switchConcordance = (concordanceName) => {
-        console.log("Concordance switched!");
         const concordance = this.concordances.find(c => c.name === concordanceName);
         if (!concordance) {
             this.groupSelectorContainer.innerHTML = "";
@@ -1755,11 +1752,9 @@ class concordanceNavigatorElement extends HTMLElement {
             this.groups = [];
 
             if (hasDirectConnections) {
-                console.log("No groups, but has direct connections!");
                 this.buildConnectionsUI(concordance.connections.connections, concordance.connections.label);
                 shouldFireShowConnection = this.data.length > 0;
             } else {
-                console.log("No groups and no connections!");
                 this.connectionsContainer.innerHTML = "";
                 this.clearData();
                 this.buttonsContainer = null;
@@ -1785,7 +1780,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     switchGroup = (groupName) => {
-        console.log("Group switched!");
         const group = this.groups.find(g => g.name === groupName);
         const hasConnections = group?.connections?.connections?.length > 0;
         const shouldFireShowConnection = hasConnections;
@@ -1793,7 +1787,6 @@ class concordanceNavigatorElement extends HTMLElement {
         if (hasConnections) {
             this.buildConnectionsUI(group.connections.connections, group.connections.label);
         } else {
-            console.log("Group has no connections!");
             this.connectionsContainer.innerHTML = "";
             this.clearData();
             this.buttonsContainer = null;
@@ -1852,7 +1845,6 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     fireLayoutChangeEvent = () => {
-        console.log("Firing layout change event!");
         const updateLayoutEvent = new CustomEvent('layout-change', {
             bubbles: true
         });
@@ -1892,7 +1884,6 @@ class concordanceNavigatorElement extends HTMLElement {
 
 
     switchTimelineBasis = (timelineBasisSiglum) => {
-        console.log("Timeline basis switched!");
         this.timelineBasis = this.timelineBasisData.find(timelineBasis => timelineBasis.siglum === timelineBasisSiglum);
         this.currentTime = this.timelineBasis.begin;
         this.currentTimeElem.value = this.secondsToHhmmss(this.currentTime);
@@ -1905,7 +1896,6 @@ class concordanceNavigatorElement extends HTMLElement {
             this.timeChanged();
         }
         else if (this.timelineState === "pause") {
-            console.log("Interval paused!");
         }
     }
 
@@ -1999,7 +1989,6 @@ class concordanceNavigatorElement extends HTMLElement {
     showConnection = () => {
         if (this._suppressShowConnection) return;
         if (!this.data || this.data.length === 0 || !this.data[this.index]) return;
-        console.log("showing", this.index);
         // Send showConnection event to host
         const showConnectionRequest = new CustomEvent('show-connection-request', {
             detail: { plist: this.data[this.index]["plist"] },
@@ -2050,7 +2039,6 @@ class concordanceNavigatorElement extends HTMLElement {
         if (updateTime && this.timelineBasis) {
             var basisMeasure = this.timelineBasis.measures.find(measure => measure.measureLabel === this.getEnhancedValue());
             if (basisMeasure) {
-                console.log("Updating time!");
                 this.currentTime = basisMeasure.begin;
                 if (this.currentTimeElem) {
                     this.currentTimeElem.value = this.secondsToHhmmss(this.currentTime);
