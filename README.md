@@ -95,4 +95,4 @@ Passed via the `concordances-data` attribute as a JSON string.
 ## Dependencies
 
 - **[`edirom-icon`](https://github.com/Edirom/edirom-core-web-components)** — for all icon rendering (prev/next buttons, show button, collapse toggle, QR scanner icon).
-- **[`edirom-qr-code-scanner`](https://github.com/Edirom/edirom-web-components)** — for QR code scanning in `mobile` mode when `enable-qr-code-scanner` is set.
+- **[`edirom-qr-code-scanner`](https://github.com/Edirom/edirom-qr-code-scanner)** — for QR code scanning in `mobile` mode when `enable-qr-code-scanner` is set.
