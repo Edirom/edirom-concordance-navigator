@@ -15,22 +15,6 @@ Web Component for navigating concordances — structured sets of corresponding p
 </edirom-concordance-navigator>
 ```
 
-```js
-const nav = document.querySelector("edirom-concordance-navigator");
-
-nav.addEventListener("show-connection-request", (e) => {
-  console.log("Show:", e.detail.plist);
-});
-
-nav.addEventListener("connection-changed", (e) => {
-  console.log("Connection ID:", e.detail.connectionId);
-});
-
-// Programmatic navigation
-nav.navigateToConnectionById("some-connection-id");
-nav.closeScannerPopover();
-```
-
 ## Data Structure
 
 Passed via the `concordances-data` attribute as a JSON string.
