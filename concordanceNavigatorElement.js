@@ -1105,6 +1105,19 @@ class concordanceNavigatorElement extends HTMLElement {
 
         const hasExpandableContent = this.hasExpandableMobileContent();
         const isCollapsible = this.isMobileCollapsible();
+
+        // Keep `isCollapsed` in sync with the rendered state. When there is no
+        // expandable content the top row is always hidden, so ensure the flag
+        // reads as collapsed. Otherwise a stale `false` value (e.g. left behind
+        // by the disabled "Freies Erkunden" concordance) would re-expand the
+        // navigator as soon as connections become available again.
+        if (!hasExpandableContent && !this.isCollapsed) {
+            this.isCollapsed = true;
+            if (this.collapseExpandIcon) {
+                this.collapseExpandIcon.setAttribute("name", "keyboard_arrow_up");
+            }
+        }
+
         if (this.collapseExpandContainer) {
             this.collapseExpandContainer.style.visibility = isCollapsible ? "visible" : "hidden";
         }
@@ -1702,13 +1715,13 @@ class concordanceNavigatorElement extends HTMLElement {
         const previousSuppressFlag = this._suppressShowConnection;
         this._suppressShowConnection = true;
 
-        this.switchConcordance(resolved.concordanceName);
+        this.switchConcordance(resolved.concordanceName, { expand: false });
         if (this.concordanceSelector) {
             this.concordanceSelector.value = resolved.concordanceName;
         }
 
         if (resolved.groupName !== null) {
-            this.switchGroup(resolved.groupName);
+            this.switchGroup(resolved.groupName, { expand: false });
             if (this.groupSelector) {
                 this.groupSelector.value = resolved.groupName;
             }
@@ -1725,7 +1738,7 @@ class concordanceNavigatorElement extends HTMLElement {
         return true;
     }
 
-    switchConcordance = (concordanceName) => {
+    switchConcordance = (concordanceName, { expand = true } = {}) => {
         const concordance = this.concordances.find(c => c.name === concordanceName);
         if (!concordance) {
             this.groupSelectorContainer.innerHTML = "";
@@ -1745,7 +1758,7 @@ class concordanceNavigatorElement extends HTMLElement {
             this.groups = concordance.groups.groups;
             this.buildGroupSelector(this.groups, concordance.groups.label);
             // switchGroup will be triggered, which builds connections UI
-            this.switchGroup(this.groupSelector.value);
+            this.switchGroup(this.groupSelector.value, { expand });
         } else {
             // Clear group selector
             this.groupSelectorContainer.innerHTML = "";
@@ -1762,8 +1775,10 @@ class concordanceNavigatorElement extends HTMLElement {
             }
         }
 
-        // Always expand when concordance changes.
-        this.setCollapseState(false);
+        // Always expand when concordance changes, unless the caller suppressed expansion.
+        if (expand) {
+            this.setCollapseState(false);
+        }
 
         if (shouldFireShowConnection) {
             this.showConnection();
@@ -1779,7 +1794,7 @@ class concordanceNavigatorElement extends HTMLElement {
         this.fireLayoutChangeEvent();
     }
 
-    switchGroup = (groupName) => {
+    switchGroup = (groupName, { expand = true } = {}) => {
         const group = this.groups.find(g => g.name === groupName);
         const hasConnections = group?.connections?.connections?.length > 0;
         const shouldFireShowConnection = hasConnections;
@@ -1794,8 +1809,10 @@ class concordanceNavigatorElement extends HTMLElement {
             this.scheduleMobileHeightSync({ animate: false });
         }
 
-        // Always expand when group changes.
-        this.setCollapseState(false);
+        // Always expand when group changes, unless the caller suppressed expansion.
+        if (expand) {
+            this.setCollapseState(false);
+        }
 
         if (shouldFireShowConnection && this.data.length > 0) {
             this.showConnection();
