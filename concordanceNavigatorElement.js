@@ -908,7 +908,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner", "current-connection", "qr-regex"];
+        return ["concordances-data", "show-connection-button-label-data", "inject-disabled-concordance", "enable-qr-code-scanner", "current-connection", "qr-regex", "skip-empty-connections"];
     }
 
     get concordancesData() {
@@ -978,11 +978,18 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     updateNavigationButtonsVisibility = () => {
+        const skipEmpty = this.hasAttribute("skip-empty-connections");
         if (this.prevConnectionButton) {
-            this.prevConnectionButton.style.visibility = this.index <= 0 ? "hidden" : "visible";
+            const hasPrev = skipEmpty
+                ? this.findNextNonEmptyIndex(this.index, -1) !== -1
+                : this.index > 0;
+            this.prevConnectionButton.style.visibility = hasPrev ? "visible" : "hidden";
         }
         if (this.nextConnectionButton) {
-            this.nextConnectionButton.style.visibility = this.index >= this.maxIndex ? "hidden" : "visible";
+            const hasNext = skipEmpty
+                ? this.findNextNonEmptyIndex(this.index, 1) !== -1
+                : this.index < this.maxIndex;
+            this.nextConnectionButton.style.visibility = hasNext ? "visible" : "hidden";
         }
     }
 
@@ -1620,6 +1627,10 @@ class concordanceNavigatorElement extends HTMLElement {
                 this.navigateToConnectionById(newValue);
             }
         }
+        if (name === "skip-empty-connections") {
+            // Only affects navigation-time behaviour; just refresh arrow visibility on toggle.
+            this.updateNavigationButtonsVisibility();
+        }
 
     }
 
@@ -2021,15 +2032,37 @@ class concordanceNavigatorElement extends HTMLElement {
         this.dispatchEvent(connectionChangedEvent);
     }
 
+    // A connection counts as "empty" when it has no targets to display.
+    isConnectionEmpty = (connection) => {
+        return !connection || typeof connection.plist !== "string" || connection.plist.trim() === "";
+    }
+
+    // Returns the first non-empty connection index strictly past fromIndex in the given
+    // direction (+1 = next, -1 = previous), or -1 if there is none. -1 is also a safe
+    // out-of-bounds value for updateIndex, so callers can pass the result straight through.
+    findNextNonEmptyIndex = (fromIndex, direction) => {
+        if (!Array.isArray(this.data) || this.data.length === 0) return -1;
+        for (let i = fromIndex + direction; i >= 0 && i <= this.maxIndex; i += direction) {
+            if (!this.isConnectionEmpty(this.data[i])) return i;
+        }
+        return -1;
+    }
+
     showPrevConnection = () => {
-        var success = this.updateIndex(this.index - 1);
+        const targetIndex = this.hasAttribute("skip-empty-connections")
+            ? this.findNextNonEmptyIndex(this.index, -1)
+            : this.index - 1;
+        var success = this.updateIndex(targetIndex);
         if (success) {
             this.showConnection();
         }
     }
 
     showNextConnection = () => {
-        var success = this.updateIndex(this.index + 1);
+        const targetIndex = this.hasAttribute("skip-empty-connections")
+            ? this.findNextNonEmptyIndex(this.index, 1)
+            : this.index + 1;
+        var success = this.updateIndex(targetIndex);
         if (success) {
             this.showConnection();
         }

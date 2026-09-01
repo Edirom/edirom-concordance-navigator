@@ -10,6 +10,7 @@ Web Component for navigating concordances — structured sets of corresponding p
   enable-qr-code-scanner
   qr-regex="^edirom://"
   inject-disabled-concordance="— off —"
+  skip-empty-connections
   concordances-data='…'
 >
 </edirom-concordance-navigator>
@@ -62,6 +63,7 @@ Passed via the `concordances-data` attribute as a JSON string.
 
 - Each concordance has either `groups` or `connections` at the top level.
 - Connection objects: `name` (display label), `plist` (space-separated URIs), and optionally `id` (for `current-connection` / `connection-changed`).
+- A connection with an empty, whitespace-only, or missing `plist` is treated as "empty" and is skipped by the Next/Prev arrows when `skip-empty-connections` is set.
 
 ## Attributes
 
@@ -73,6 +75,7 @@ Passed via the `concordances-data` attribute as a JSON string.
 | `enable-qr-code-scanner` | boolean | Shows the QR scanner icon in `mobile` mode. |
 | `qr-regex` | string | Regex to filter QR scan results. Passed through to `edirom-qr-code-scanner`. |
 | `current-connection` | string | Connection `id` to navigate to on load. |
+| `skip-empty-connections` | boolean | When present, the Next/Prev arrow buttons skip connections whose `plist` is empty/whitespace/missing and land on the nearest non-empty one. The text input, slider, `current-connection`, and `navigateToConnectionById()` are unaffected and always select the exact connection requested. If only empty connections remain in a direction, that arrow does nothing and is hidden. |
 
 ## Events
 
