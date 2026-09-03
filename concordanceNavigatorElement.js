@@ -2,7 +2,7 @@ import '../edirom-core-web-components/src/edirom-icon.js';
 import '../edirom-qr-code-scanner/edirom-qr-code-scanner.js';
 
 
-console.log("ConcordanceNavigator Webcomponent loaded");
+console.log("ConcordanceNavigator Webcomponent loaded 122345");
 
 
 const templates = {
@@ -2017,15 +2017,15 @@ class concordanceNavigatorElement extends HTMLElement {
     showConnection = () => {
         if (this._suppressShowConnection) return;
         if (!this.data || this.data.length === 0 || !this.data[this.index]) return;
-        // Send showConnection event to host
-        const showConnectionRequest = new CustomEvent('show-connection-request', {
-            detail: { plist: this.data[this.index]["plist"] },
-            bubbles: true
-        });
-        this.dispatchEvent(showConnectionRequest);
-        // Notify host about the current connection ID (may be null if connection has no id)
+        // Notify the host that the current connection changed. The detail carries both
+        // the target list to display (`plist`) and the connection's identity
+        // (`connectionId`, null when the connection has no id). The host decides what to
+        // do with each — open the plist, record the id in app state / URL, or both.
         const connectionChangedEvent = new CustomEvent('connection-changed', {
-            detail: { connectionId: this.data[this.index]?.id ?? null },
+            detail: {
+                connectionId: this.data[this.index]?.id ?? null,
+                plist: this.data[this.index]["plist"]
+            },
             bubbles: true,
             composed: true
         });

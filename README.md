@@ -81,12 +81,13 @@ Passed via the `concordances-data` attribute as a JSON string.
 
 | Event | Detail | Description |
 |---|---|---|
-| `show-connection-request` | `{ plist: string }` | Fired when a connection should be displayed. |
-| `connection-changed` | `{ connectionId: string \| null }` | Fired alongside `show-connection-request` with the connection's `id`. |
+| `connection-changed` | `{ connectionId: string \| null, plist: string }` | Fired whenever the navigator's current connection changes (arrows, slider, text input, `current-connection`, `navigateToConnectionById()`). `plist` is the connection's space-separated target URIs; `connectionId` is its `id`, or `null` if it has none. The host decides what to do — typically open `plist` and store `connectionId` in app state / URL. |
 | `concordance-navigator-disabled` | — | Fired when the injected disabled concordance is selected. |
 | `layout-change` | — | Fired when concordance or group changes. |
-| `load-links-request` | QR code text | Fired when a QR code is successfully scanned. |
+| `load-links-request` | target string | Generic "resolve this target" request — the same event `edirom-navigator` dispatches on item click. The host passes `detail` straight to its link resolver. In this component the QR-code scanner is currently the only trigger, so `detail` is the scanned text. |
 | `changed-play-pause-status` | `{ newStatus: "play" \| "pause" }` | Desktop-only, experimental timeline feature. |
+
+`load-links-request` is intentionally trigger-agnostic and shared with `edirom-navigator`, so a host can wire a single handler for "resolve this target string". `connection-changed` is different: it reports a *position* within the concordance data, with a stable `connectionId` the host can persist and share.
 
 ## Methods
 
