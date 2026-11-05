@@ -4,6 +4,16 @@ import '../edirom-qr-code-scanner/edirom-qr-code-scanner.js';
 
 console.log("ConcordanceNavigator Webcomponent loaded 122345");
 
+// Colouring: the component reads the public custom properties --primary-color, --secondary-color and
+// --tertiary-color (see README "Styling") and aliases them to private ones; all rules below use only the
+// private --_cn-* names. The fallbacks are the Edirom grey palette. Hover/border shades are derived with
+// color-mix(), so the three properties are the whole interface. Same approach as edirom-connected-workspace.
+const themeTokens = `
+            --_cn-primary: var(--primary-color, #333333);
+            --_cn-secondary: var(--secondary-color, #cccccc);
+            --_cn-tertiary: var(--tertiary-color, #ffffff);
+`;
+
 
 const templates = {
     desktop: `
@@ -122,12 +132,12 @@ const templates = {
             overflow: visible;
             overscroll-behavior: contain; /* Prevent pull-to-refresh on supported browsers */
             touch-action: pan-x pan-y; /* Allow native gestures; vertical is handled via JS for collapse */
-            --nav-bg: var(--concordance-navigator-background, #1f2333);
+            ${themeTokens}
+            --nav-bg: var(--concordance-navigator-background, var(--_cn-primary));
             --nav-top-bg: color-mix(in srgb, var(--nav-bg) 78%, white);
-            --nav-contrast: #e4d9a5;
-            --nav-contrast-strong: #cdbf86;
-            --nav-surface: #f6f6f3;
-            --nav-surface-border: #d8d0a4;
+            --nav-contrast: var(--concordance-navigator-foreground, var(--_cn-secondary));
+            --nav-contrast-strong: color-mix(in oklch, var(--nav-contrast) 90%, black);
+            --nav-surface-border: color-mix(in oklch, var(--_cn-secondary) 90%, black);
             --nav-side-control-width: 2.75rem;
             --nav-row-gap: 0.75rem;
             --nav-control-column-max-width: 500px;
@@ -276,7 +286,7 @@ const templates = {
         }
 
         #concordance-selector:hover, #group-selector:hover {
-            background: #262b3f;
+            background: color-mix(in oklch, var(--nav-bg) 88%, var(--nav-contrast));
         }
 
         #input-wrapper {
@@ -286,7 +296,7 @@ const templates = {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--tertiary-color);
+            background: var(--_cn-tertiary);
             border: 1px solid var(--nav-surface-border);
             border-radius: 8px;
             box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -307,7 +317,7 @@ const templates = {
         #item-selector-prefix {
             margin-right: 4px;
             font-size: 0.8rem;
-            color: #1a1a1a;
+            color: var(--_cn-primary);
             white-space: nowrap;
             pointer-events: none;
             user-select: none;
@@ -323,7 +333,7 @@ const templates = {
             padding: 0;
             background: transparent;
             border: none;
-            color: #1a1a1a;
+            color: var(--_cn-primary);
             font-size: 1rem;
             text-align: left;
         }
@@ -366,7 +376,7 @@ const templates = {
         }
 
         #prev-connection-button:hover, #next-connection-button:hover {
-            background: #262b3f;
+            background: color-mix(in oklch, var(--nav-bg) 88%, var(--nav-contrast));
         }
 
         #prev-connection-button:active, #next-connection-button:active {
@@ -380,11 +390,11 @@ const templates = {
             height: 100%;
             width: 36px;
             border: 1px solid var(--nav-surface-border);
-            background: var(--secondary-color);
+            background: var(--_cn-secondary);
             margin: 0;
             font-size: 0.8em;
             border-radius: 0 8px 8px 0;
-            color: #2d2d2d;
+            color: var(--_cn-primary);
             user-select: none;
             -webkit-user-select: none;
         }
@@ -1235,6 +1245,8 @@ class concordanceNavigatorElement extends HTMLElement {
     _buildScannerPopover = () => {
         const style = document.createElement("style");
         style.textContent = `
+            :host {${themeTokens}            }
+
             #scanner-popover {
                 position: fixed;
                 inset: 0;
@@ -1293,8 +1305,8 @@ class concordanceNavigatorElement extends HTMLElement {
                 align-items: center;
                 gap: 10px;
                 padding: 14px 20px;
-                background-color: var(--primary-color);
-                color: var(--secondary-color);
+                background-color: var(--_cn-primary);
+                color: var(--_cn-secondary);
                 font-size: 1rem;
                 font-weight: 600;
                 flex-shrink: 0;
@@ -1309,7 +1321,7 @@ class concordanceNavigatorElement extends HTMLElement {
             #scanner-content {
                 flex: 1;
                 overflow-y: auto;
-                background-color: var(--tertiary-color);
+                background-color: var(--_cn-tertiary);
                 box-sizing: border-box;
                 -webkit-overflow-scrolling: touch;
                 display: flex;
@@ -1332,14 +1344,14 @@ class concordanceNavigatorElement extends HTMLElement {
                 cursor: pointer;
                 border: none;
                 border-radius: 8px;
-                background: var(--secondary-color);
-                color: var(--primary-color);
+                background: var(--_cn-secondary);
+                color: var(--_cn-primary);
                 font-weight: bold;
                 -webkit-tap-highlight-color: transparent;
             }
 
             #scanner-close-button:active {
-                background: color-mix(in oklch, var(--secondary-color) 85%, black);
+                background: color-mix(in oklch, var(--_cn-secondary) 85%, black);
             }
 
             #scanner-loading-placeholder {
@@ -1348,7 +1360,7 @@ class concordanceNavigatorElement extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: var(--primary-color);
+                color: var(--_cn-primary);
                 font-size: 1.2rem;
                 pointer-events: none;
                 border-radius: inherit;

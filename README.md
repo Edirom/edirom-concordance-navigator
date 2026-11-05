@@ -96,6 +96,26 @@ Passed via the `concordances-data` attribute as a JSON string.
 | `navigateToConnectionById(id)` | `boolean` | Select the connection with the given `id`. Returns `true` on success. |
 | `closeScannerPopover()` | — | Closes the QR scanner popover if open. |
 
+## Styling
+
+Themed via CSS custom properties, overridable on the element or any ancestor (they are inherited into the shadow DOM). Hover and border shades are derived from these with `color-mix()`; the defaults are the Edirom grey palette.
+
+| Custom property | Default | Description |
+|---|---|---|
+| `--primary-color` | `#333333` | Background of the bar, selectors and buttons (mobile layout); text on the light input field |
+| `--secondary-color` | `#cccccc` | Text and borders on the bar; background of the "show" button; QR popover close button |
+| `--tertiary-color` | `#ffffff` | Background of the input field and of the QR scanner popover |
+| `--concordance-navigator-background` | `--primary-color` | Overrides the bar background only (mobile layout) |
+| `--concordance-navigator-foreground` | `--secondary-color` | Overrides the text and border colour on the bar only (mobile layout); set it together with the background, e.g. dark on a light bar |
+
+```css
+edirom-concordance-navigator {
+  --primary-color: #232a44;
+  --secondary-color: #e9d9af;
+  --tertiary-color: #faf6f0;
+}
+```
+
 ## Dependencies
 
 - **[`edirom-icon`](https://github.com/Edirom/edirom-core-web-components)** — for all icon rendering (prev/next buttons, show button, collapse toggle, QR scanner icon).
