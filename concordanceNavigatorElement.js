@@ -225,6 +225,12 @@ const templates = {
             display: flex;
             flex: 1 1 auto;
             flex-direction: column;
+            /* Always fill the full height of #bottom-row. Its content height differs
+               between modes (35px selector in "free exploration" vs. 41px button row
+               incl. the input-wrapper margin), and #bottom-row centers its items, which
+               otherwise left a gap above/below the shorter variant. */
+            align-self: stretch;
+            justify-content: center;
             margin-inline: auto;
             border-radius: 0 0 12px 12px;
             border-top: none;
