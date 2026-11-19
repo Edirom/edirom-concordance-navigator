@@ -73,9 +73,15 @@ Passed via the `concordances-data` attribute as a JSON string.
 | `layout-mode` | `"desktop"` \| `"mobile"` | UI variant. Set in markup — not observed after connect. Default: `"desktop"`. |
 | `inject-disabled-concordance` | string | Injects a placeholder concordance at the top of the selector. When selected, no connections are shown. |
 | `enable-qr-code-scanner` | boolean | Shows the QR scanner icon in `mobile` mode. |
-| `qr-regex` | string | Regex to filter QR scan results, passed to `edirom-qr-code-scanner` as `regex`; without it every scan is accepted. An invalid pattern logs a warning and disables the scanner (the scan button is hidden). |
+| `qr-regex` | string | Regex to filter QR scan results, passed to `edirom-qr-code-scanner` as `regex`; without it every scan is accepted. Codes it rejects can still be accepted by the `qrAlsoAccept` property. An invalid pattern logs a warning and disables the scanner (the scan button is hidden). |
 | `current-connection` | string | Connection `id` to navigate to on load. |
 | `skip-empty-connections` | boolean | When present, the Next/Prev arrow buttons skip connections whose `plist` is empty/whitespace/missing and land on the nearest non-empty one. The text input, slider, `current-connection`, and `navigateToConnectionById()` are unaffected and always select the exact connection requested. If only empty connections remain in a direction, that arrow does nothing and is hidden. |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `qrAlsoAccept` | `(text: string) => boolean` \| `null` | A function that accepts scanned codes `qr-regex` rejects, passed to the scanner as its `alsoAccept`. It lets the host accept what it can handle itself (for example its own links) without the regex having to describe it. It is only asked about codes the regex does not match, and does not override an invalid `qr-regex`. `null` removes it. Can be set before the element is upgraded. |
 
 ## Events
 

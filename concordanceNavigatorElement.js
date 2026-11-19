@@ -482,6 +482,15 @@ class concordanceNavigatorElement extends HTMLElement {
         this._qrScannerElement = null;
         // True while `qr-regex` is not a valid regular expression: the scanner is then disabled
         this._qrRegexInvalid = false;
+        // The `qrAlsoAccept` function (see the property), passed on to the scanner
+        this._qrAlsoAccept = null;
+        // A host can set `qrAlsoAccept` before this element is upgraded. That own property would hide the accessor
+        // below, so it is moved onto it.
+        if (Object.prototype.hasOwnProperty.call(this, "qrAlsoAccept")) {
+            const earlyValue = this.qrAlsoAccept;
+            delete this.qrAlsoAccept;
+            this.qrAlsoAccept = earlyValue;
+        }
         this._scannerPlaceholder = null;
         this._popoverToggleHandler = null;
         this._documentVisibilityHandler = null;
@@ -494,6 +503,24 @@ class concordanceNavigatorElement extends HTMLElement {
         this._mobileTopRowShown = null;
         this._mobileHeightTransitionEnd = null;
         this.buttonsContainer = null;
+    }
+
+    /**
+     * A function the host can set to accept scanned codes that `qr-regex` does not match:
+     * `(text: string) => boolean`. It is passed on to the scanner as its `alsoAccept` property, so a code is
+     * accepted if it matches `qr-regex` or this function says yes. Set it to `null` to remove it. A property only,
+     * as a function cannot be an attribute.
+     * @type {((text: string) => boolean)|null}
+     */
+    get qrAlsoAccept() {
+        return this._qrAlsoAccept;
+    }
+
+    set qrAlsoAccept(fn) {
+        this._qrAlsoAccept = typeof fn === "function" ? fn : null;
+        if (this._qrScannerElement) {
+            this._qrScannerElement.alsoAccept = this._qrAlsoAccept;
+        }
     }
 
     getLayoutMode = (layoutMode) => layoutMode === 'mobile' ? 'mobile' : 'desktop';
@@ -1507,6 +1534,7 @@ class concordanceNavigatorElement extends HTMLElement {
         if (this.hasAttribute("qr-regex")) {
             scanner.setAttribute("regex", this.getAttribute("qr-regex"));
         }
+        scanner.alsoAccept = this._qrAlsoAccept;
         scanner.addEventListener("qr-code-scanned", (e) => {
             console.log("QR Code scanned:", e.detail.text);
             const paused = scanner.pauseScanner(true);
