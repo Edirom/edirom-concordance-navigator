@@ -480,6 +480,8 @@ class concordanceNavigatorElement extends HTMLElement {
         this._scannerPopover = null;
         this._scannerContainer = null;
         this._qrScannerElement = null;
+        // True while `qr-regex` is not a valid regular expression: the scanner is then disabled
+        this._qrRegexInvalid = false;
         this._scannerPlaceholder = null;
         this._popoverToggleHandler = null;
         this._documentVisibilityHandler = null;
@@ -1020,7 +1022,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
     updateScanContainerVisibility = () => {
         if (!this.scanContainer) return;
-        const enabled = this.hasAttribute("enable-qr-code-scanner");
+        const enabled = this.hasAttribute("enable-qr-code-scanner") && !this._qrRegexInvalid;
         this.scanContainer.style.visibility = enabled ? "visible" : "hidden";
         this.scanContainer.style.pointerEvents = enabled ? "auto" : "none";
         this.scanContainer.setAttribute("aria-hidden", enabled ? "false" : "true");
@@ -1432,6 +1434,7 @@ class concordanceNavigatorElement extends HTMLElement {
 
         this._popoverToggleHandler = async (event) => {
             if (event.newState === "open") {
+                if (this._qrRegexInvalid) return;
                 this._showScannerPlaceholder();
                 const scanner = this._ensureScannerElement();
                 const resumed = scanner.resumeScanner();
@@ -1470,6 +1473,7 @@ class concordanceNavigatorElement extends HTMLElement {
     }
 
     _openScannerPopover = () => {
+        if (this._qrRegexInvalid) return;
         const btnRect = this.scanContainer.getBoundingClientRect();
         const btnCenterX = btnRect.left + btnRect.width / 2;
         const btnCenterY = btnRect.top + btnRect.height / 2;
@@ -1547,6 +1551,43 @@ class concordanceNavigatorElement extends HTMLElement {
         // Re-show the placeholder so the next open shows it while the camera
         // initialises (whether this was a clean pause or a forced reset).
         this._showScannerPlaceholder();
+    }
+
+    /**
+     * Whether `value` can be used as the `qr-regex`: it is a valid regular expression, or there is none. An
+     * invalid one logs a warning, because the scanner is disabled for it.
+     * @param {string|null} value - The attribute value
+     * @returns {boolean}
+     */
+    _isValidQrRegex = (value) => {
+        if (value === null) return true;
+        try {
+            new RegExp(value);
+            return true;
+        } catch (error) {
+            console.warn(`Edirom Concordance Navigator: invalid qr-regex "${value}", the QR code scanner is disabled.`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Closes the scanner popover and removes the scanner element, which a new `qr-regex` that is valid again
+     * creates anew the next time the popover is opened.
+     */
+    _removeScannerForInvalidRegex = async () => {
+        if (this._scannerPopover?.matches(":popover-open")) {
+            this._scannerPopover.hidePopover();
+        }
+
+        const scanner = this._qrScannerElement;
+        this._qrScannerElement = null;
+        if (!scanner) return;
+        try {
+            await scanner.stopScanner();
+        } catch (err) {
+            console.error("Failed to stop QR scanner for an invalid regex", err);
+        }
+        scanner.remove();
     }
 
     _releaseScannerForInactivity = async () => {
@@ -1632,13 +1673,17 @@ class concordanceNavigatorElement extends HTMLElement {
             this.updateScanContainerVisibility();
         }
         if (name === "qr-regex") {
-            if (this._qrScannerElement) {
+            this._qrRegexInvalid = !this._isValidQrRegex(newValue);
+            if (this._qrRegexInvalid) {
+                this._removeScannerForInvalidRegex();
+            } else if (this._qrScannerElement) {
                 if (newValue !== null) {
                     this._qrScannerElement.setAttribute("regex", newValue);
                 } else {
                     this._qrScannerElement.removeAttribute("regex");
                 }
             }
+            this.updateScanContainerVisibility();
         }
         if (name === "current-connection") {
             if (newValue && this.concordanceSelectorContainer && this.concordances.length > 0) {
